@@ -83,7 +83,7 @@
         }
 
         #timer-display {
-            display: none; /* Hidden by default */
+            display: none; 
             color: #fff;
             font-size: 1.4rem;
             text-shadow: 0 0 10px #ff0000;
@@ -274,8 +274,8 @@
             <div style="background:rgba(50,0,0,0.8); padding:20px; border-radius:12px; border:2px solid #f00; width:100%; max-width:340px; box-shadow: inset 0 0 30px rgba(255,0,0,0.2);">
                 <p style="color:#ff4444; font-weight:bold; font-size:1.8rem; margin:0; text-shadow: 0 0 10px #f00;">ENTER HELL</p>
                 <p style="font-size:0.9rem; color:#fff; margin-bottom:10px;">Target: 50 | Time: 5 Mins</p>
-                <p style="font-size:0.8rem; color:#ffaaaa; margin-bottom:15px;">"Fail here = Back to Level 1"</p>
-                <button id="btn-demon" class="btn btn-demon" onclick="startDemon()">RISK IT (7-DAY KEY)</button>
+                <p style="font-size:0.8rem; color:#ffaaaa; margin-bottom:15px;">"Unlimited Retries within 5 mins"</p>
+                <button id="btn-demon" class="btn btn-demon" onclick="startDemon()">GOOD LUCK 😈</button>
             </div>
         </div>
 
@@ -332,7 +332,7 @@
         let GRAVITY = 0.6;
         let JUMP = 8.5;
         let GAP = 170;
-        let TIMER = 300; // 5 minutes in seconds
+        let TIMER = 300; // 5 minutes
 
         let width, height;
         function resize() {
@@ -344,6 +344,49 @@
         window.addEventListener('resize', resize);
         resize();
 
+        // --- AUDIO SYSTEM (Procedural) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = new AudioContext();
+        
+        const SFX = {
+            jump: () => {
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            },
+            score: () => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1500, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            },
+            explode: () => {
+                const bufferSize = audioCtx.sampleRate * 0.5;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                noise.connect(gain); gain.connect(audioCtx.destination);
+                noise.start();
+            }
+        };
+
         // --- STATE & VFX ---
         let frames = 0;
         let score = 0;
@@ -353,11 +396,10 @@
         let timerInterval = null;
         let cooldownInterval = null;
         
-        // --- ASSETS ---
         let particles = []; 
         let trail = [];     
         let shockwaves = [];
-        let floatTexts = []; // "POW", "GOOD ONE"
+        let floatTexts = []; 
         
         // --- COPY FUNCTION ---
         async function copyKey(elementId, btnElement) {
@@ -371,24 +413,21 @@
                 
                 setTimeout(() => {
                     btnElement.innerText = originalText;
-                    btnElement.style.background = ""; // revert
+                    btnElement.style.background = ""; 
                     btnElement.style.color = "#fff";
                 }, 2000);
             } catch (err) {
-                console.error('Failed to copy', err);
                 btnElement.innerText = "MANUAL COPY REQ.";
             }
         }
 
-        // --- OBJECTS ---
+        // --- GAME OBJECTS ---
         const player = {
             x: 60, y: 200, size: 32, velocity: 0, rotation: 0,
-            color: '#00ffff',
             update: function() {
                 this.velocity += GRAVITY;
                 this.y += this.velocity;
                 
-                // Trail Logic
                 if(frames % 2 === 0 && gameState === 'PLAY') {
                     trail.push({x: this.x, y: this.y, rot: this.rotation, alpha: 1.0});
                     if(trail.length > 12) trail.shift();
@@ -399,12 +438,11 @@
                 }
             },
             draw: function() {
-                // 1. Draw Ghost Trail
+                // Ghost Trail
                 for(let i=0; i<trail.length; i++) {
                     let t = trail[i];
                     t.alpha -= 0.08;
                     if(t.alpha < 0) t.alpha = 0;
-                    
                     ctx.save();
                     ctx.translate(t.x + this.size/2, t.y + this.size/2);
                     ctx.rotate(t.rot * Math.PI / 180);
@@ -415,7 +453,7 @@
                     ctx.restore();
                 }
                 
-                // 2. Draw Player
+                // Player
                 ctx.save();
                 ctx.translate(this.x + this.size/2, this.y + this.size/2);
                 ctx.rotate(this.rotation * Math.PI / 180);
@@ -425,7 +463,6 @@
                 
                 ctx.fillStyle = "#000";
                 ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
-                
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = "#fff";
                 ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
@@ -433,7 +470,6 @@
                 let eyeOffset = Math.sin(frames * 0.2) * 2;
                 ctx.fillStyle = MODE === 'DEMON' ? '#f00' : '#0ff';
                 ctx.fillRect(-6 + eyeOffset, -6 - eyeOffset, 12, 12);
-                
                 ctx.restore();
                 ctx.shadowBlur = 0;
             }
@@ -461,26 +497,25 @@
                         if(p.top < 20 || p.top > height/2) p.moveY *= -1;
                     }
 
-                    // Collision Logic
+                    // Collision
                     let pad = 8; 
                     if(player.x+pad < p.x+p.w && player.x+player.size-pad > p.x && 
                        (player.y+pad < p.top || player.y+player.size-pad > height - p.bottom)) {
                         die();
                     }
 
-                    // Score Logic
+                    // Score
                     if(p.x + p.w < player.x && !p.passed) {
                         score++;
                         p.passed = true;
                         updateProgress();
+                        SFX.score();
                         
                         if(score % 5 === 0) triggerBigShake();
                         else triggerSmallShake();
                         
-                        // Juice: Spawn Text & Shockwave
                         shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
                         
-                        // Random text chance
                         if(Math.random() > 0.4) {
                             const words = ["POW", "GOOD ONE", "PHEW", "CLOSE!", "NICE", "EZ", "WOAH"];
                             const w = words[Math.floor(Math.random()*words.length)];
@@ -504,33 +539,27 @@
                     ctx.strokeStyle = "#fff";
                     ctx.shadowBlur = 10;
                     ctx.shadowColor = mainColor;
-
                     let grad = ctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
                     grad.addColorStop(0, glowColor);
                     grad.addColorStop(1, "#000");
 
-                    // Top
                     ctx.fillStyle = grad;
                     ctx.fillRect(p.x, 0, p.w, p.top);
                     ctx.strokeRect(p.x, -5, p.w, p.top+5);
                     ctx.fillStyle = mainColor;
                     ctx.fillRect(p.x + 10, p.top - 20, p.w - 20, 5);
-                    ctx.fillRect(p.x + 10, p.top - 40, p.w - 20, 5);
-
-                    // Bottom
+                    
                     ctx.fillStyle = grad;
                     ctx.fillRect(p.x, height-p.bottom, p.w, p.bottom);
                     ctx.strokeRect(p.x, height-p.bottom, p.w, p.bottom+5);
                     ctx.fillStyle = mainColor;
                     ctx.fillRect(p.x + 10, height - p.bottom + 15, p.w - 20, 5);
-                    ctx.fillRect(p.x + 10, height - p.bottom + 35, p.w - 20, 5);
-                    
                     ctx.shadowBlur = 0;
                 }
             }
         };
 
-        // --- VFX FUNCTIONS ---
+        // --- VFX ---
         function drawGridBackground() {
             let bgColor = MODE === 'DEMON' ? '#1a0000' : '#050510';
             ctx.fillStyle = bgColor;
@@ -542,7 +571,6 @@
             ctx.lineWidth = 2;
             let gridColor = MODE === 'DEMON' ? 'rgba(255, 0, 0, 0.2)' : `hsla(${globalHue}, 100%, 50%, 0.15)`;
             ctx.strokeStyle = gridColor;
-
             ctx.beginPath();
             for(let i = 0; i <= width + 100; i += 100) {
                 let x = i + bgOffset;
@@ -566,6 +594,7 @@
         }
 
         function createExplosion(x, y, color) {
+            SFX.explode();
             for(let i=0; i<25; i++) {
                 particles.push({
                     type: 'explode',
@@ -600,10 +629,10 @@
                 `linear-gradient(90deg, #f00, #ff0)` : `linear-gradient(90deg, #0ff, #b0f)`;
         }
         
-        // --- TIMER LOGIC ---
+        // --- TIMER ---
         function startTimer() {
-            stopTimer();
-            if(MODE !== 'DEMON') return;
+            // Only start if not running or if we need a reset
+            if(timerInterval) return; // Keep running if already exists
             
             TIMER = 300; // 5 mins
             updateTimerDisplay();
@@ -614,13 +643,14 @@
                 updateTimerDisplay();
                 if(TIMER <= 0) {
                     stopTimer();
-                    die(true); // True means timeout death
+                    die(true); // Timeout death
                 }
             }, 1000);
         }
 
         function stopTimer() {
             if(timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
             timerEl.style.display = 'none';
         }
 
@@ -632,7 +662,6 @@
 
         // --- CORE LOGIC ---
         function die(isTimeout = false) {
-            stopTimer();
             flashScreen();
             triggerBigShake();
             createExplosion(player.x, player.y, MODE==='DEMON'?'#f00':'#0ff');
@@ -645,11 +674,21 @@
                 deathSub.innerText = "just go back to jllm atp fam";
                 deathBtn.innerText = "TRY AGAIN";
             } else {
-                deathTitle.innerText = "lol";
-                deathSub.innerText = isTimeout ? "TIME IS UP" : "BACK TO START";
-                deathBtn.innerText = "RESTART SYSTEM";
+                // Demon Mode
+                if(isTimeout) {
+                    deathTitle.innerText = "TIME UP";
+                    deathSub.innerText = "GAME OVER";
+                    deathBtn.innerText = "RESTART SYSTEM";
+                } else {
+                    deathTitle.innerText = "lol";
+                    deathSub.innerText = "KEEP GOING - TIMER IS RUNNING";
+                    deathBtn.innerText = "RETRY LEVEL 2";
+                }
             }
 
+            // Pause timer visually if you die in demon mode, but logic keeps it running
+            // Actually better to keep logic running in background.
+            
             setTimeout(() => {
                 deathModal.style.display = 'flex';
             }, 900);
@@ -658,24 +697,29 @@
         window.handleDeathAction = function() {
             deathModal.style.display = 'none';
             if(MODE === 'NORMAL') {
-                resetLevel(); // Just restart level 1
+                resetLevel(false); // Full reset Level 1
             } else {
-                fullReset(); // Back to start from hell
+                // Check if we died due to timeout
+                if(TIMER <= 0) {
+                    fullReset();
+                } else {
+                    // Soft Reset for Demon Mode
+                    resetEntities();
+                    gameState = 'PLAY';
+                    loop();
+                }
             }
         };
 
         function loop() {
             if(gameState !== 'PLAY' && gameState !== 'DIE_ANIM') return;
             
-            // Color Cycling
             if(MODE === 'NORMAL') globalHue = (globalHue + 1) % 360;
             else globalHue = 0;
 
             frames++;
-
             drawGridBackground();
 
-            // Draw Shockwaves
             ctx.lineWidth = 4;
             for(let s of shockwaves) {
                 s.r += 10; s.alpha -= 0.05;
@@ -684,7 +728,6 @@
             }
             shockwaves = shockwaves.filter(s => s.alpha > 0);
             
-            // Draw Floating Texts
             ctx.font = "900 24px 'Russo One'";
             ctx.textAlign = "center";
             for(let f of floatTexts) {
@@ -710,7 +753,6 @@
             obstacles.draw();
             if(gameState === 'PLAY') player.draw();
 
-            // Draw Explosion Particles
             for(let p of particles) {
                 if(p.type === 'explode') {
                     p.x += p.vx; p.y += p.vy; p.life -= 0.03;
@@ -721,7 +763,6 @@
             ctx.globalAlpha = 1;
             particles = particles.filter(p => p.type === 'dust' || p.life > 0);
 
-            // Death Check
             if(gameState === 'PLAY' && (player.y > height || player.y < -50)) die();
 
             requestAnimationFrame(loop);
@@ -739,16 +780,24 @@
             }
         }
 
-        function resetLevel() {
-            gameState = 'START';
+        // Resets just the entities (Player/Obstacles)
+        function resetEntities() {
             player.y = height/2; player.velocity = 0; player.rotation = 0;
             obstacles.list = []; trail = []; shockwaves = []; floatTexts = [];
             score = 0; frames = 0;
             updateProgress();
-            stopTimer();
             
+            // Give brief immunity or clear start area
+            obstacles.list.push({x: width + 400, w: 0, top: 0, bottom: 0, passed: true}); 
+        }
+
+        // Resets the whole level state
+        function resetLevel(keepTimer = false) {
+            gameState = 'START';
+            resetEntities();
+            
+            if(!keepTimer) stopTimer();
             initParticles();
-            
             drawGridBackground();
             player.draw();
             
@@ -758,12 +807,14 @@
             titleEl.style.color = MODE === 'NORMAL' ? "#fff" : "#f00";
             if(MODE === 'DEMON') {
                 titleEl.style.textShadow = "0 0 40px #f00";
-                startTimer();
+                timerEl.style.display = 'block'; // Show timer even on start screen if in Demon
             }
         }
 
         function startGame() {
             if(gameState === 'PLAY') return;
+            if(audioCtx.state === 'suspended') audioCtx.resume(); // Start Audio
+            
             gameState = 'PLAY';
             document.getElementById('main-menu').style.display = 'none';
             player.velocity = -JUMP;
@@ -778,7 +829,6 @@
             
             if(MODE === 'NORMAL') {
                 offerModal.style.display = 'flex';
-                // 10 Second Cooldown Logic
                 let waitTime = 10;
                 btnDemon.disabled = true;
                 btnDemon.style.filter = "grayscale(1)";
@@ -792,16 +842,15 @@
                         clearInterval(cooldownInterval);
                         btnDemon.disabled = false;
                         btnDemon.style.filter = "none";
-                        btnDemon.innerText = "RISK IT (7-DAY KEY)";
+                        btnDemon.innerText = "GOOD LUCK 😈";
                     }
                 }, 1000);
-                
             } else {
                 winDemModal.style.display = 'flex';
             }
         }
 
-        // --- CONTROLS & EVENTS ---
+        // --- CONTROLS ---
         window.claimStandard = function() {
             offerModal.style.display = 'none';
             winStdModal.style.display = 'flex';
@@ -815,12 +864,12 @@
             GAP = 155;
             wrapper.style.borderColor = "#f00";
             wrapper.style.boxShadow = "0 0 50px rgba(255,0,0,0.6)";
-            resetLevel();
+            startTimer();
+            resetLevel(true); // true = don't stop the timer we just started
         };
 
         window.fullReset = function() {
-            deathModal.style.display = 'none'; // Ensure death modal is gone
-            permaDeathModal = null; // Cleanup ref if needed
+            deathModal.style.display = 'none';
             MODE = 'NORMAL';
             TARGET_SCORE = 30;
             SPEED = 6.5;      
@@ -837,6 +886,7 @@
             if(gameState === 'START') startGame();
             else if(gameState === 'PLAY') {
                 player.velocity = -JUMP;
+                SFX.jump();
                 for(let i=0; i<5; i++) {
                     particles.push({
                         type: 'explode',
