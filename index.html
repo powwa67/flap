@@ -33,17 +33,10 @@
             transition: border-color 0.5s, box-shadow 0.5s;
         }
 
-        /* GIF Overlays */
         .bg-gif {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
-            z-index: 5;
-            display: none; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0; transition: opacity 0.5s;
+            pointer-events: none; z-index: 5; display: none; 
         }
 
         .shake-small { animation: shake-s 0.1s; }
@@ -51,122 +44,88 @@
 
         @keyframes shake-s { 0% { transform: translate(0,0); } 50% { transform: translate(0, 4px); } 100% { transform: translate(0,0); } }
         @keyframes glitch-skew {
-            0% { transform: skew(0deg); }
-            20% { transform: skew(-2deg); }
-            40% { transform: skew(2deg); }
-            60% { transform: skew(0deg); }
-            80% { transform: skew(-1deg); }
-            100% { transform: skew(1deg); }
+            0% { transform: skew(0deg); } 20% { transform: skew(-2deg); }
+            40% { transform: skew(2deg); } 60% { transform: skew(0deg); }
+            80% { transform: skew(-1deg); } 100% { transform: skew(1deg); }
         }
 
         canvas { display: block; width: 100%; height: 100%; }
 
         #ui-layer {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column;
+            justify-content: space-between; z-index: 10;
         }
 
         #top-bar {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            width: 100%;
-            box-sizing: border-box;
+            display: flex; align-items: center; padding: 20px; width: 100%; box-sizing: border-box;
         }
 
-        #progress-container {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
+        #progress-container { flex-grow: 1; display: flex; flex-direction: column; }
 
         #progress-bar {
-            height: 20px;
-            background: rgba(0,0,0,0.6);
-            border: 2px solid #fff;
-            border-radius: 6px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 15px rgba(255,255,255,0.1);
-            transform: skew(-10deg);
+            height: 20px; background: rgba(0,0,0,0.6); border: 2px solid #fff;
+            border-radius: 6px; position: relative; overflow: hidden;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1); transform: skew(-10deg);
         }
 
         #progress-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #00ffff, #bd00ff);
-            transition: width 0.1s linear;
-            box-shadow: 0 0 20px #fff;
+            width: 0%; height: 100%; background: linear-gradient(90deg, #00ffff, #bd00ff);
+            transition: width 0.1s linear; box-shadow: 0 0 20px #fff;
         }
 
         #main-menu {
-            position: absolute;
-            top: 45%; left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            width: 100%;
-            pointer-events: auto; /* Allow clicking buttons */
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; width: 100%; pointer-events: auto; z-index: 20;
         }
 
         h1 {
-            color: #fff;
-            font-size: 3.5rem;
-            margin: 0;
-            line-height: 0.95;
+            color: #fff; font-size: 3.5rem; margin: 0; line-height: 0.95;
             text-shadow: 4px 4px 0px #000, 0 0 40px #00ffff;
-            -webkit-text-stroke: 2px #000;
-            transform: skew(-5deg);
-            letter-spacing: -2px;
+            -webkit-text-stroke: 2px #000; transform: skew(-5deg); letter-spacing: -2px;
         }
         
-        /* Modals */
+        /* Performance Button */
+        #perf-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            font-family: 'Russo One', sans-serif;
+            font-size: 1rem;
+            padding: 10px 20px;
+            margin-top: 25px;
+            cursor: pointer;
+            border-radius: 8px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            pointer-events: auto; /* Ensure clickable */
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            position: relative;
+            z-index: 30; /* Higher than tap area */
+        }
+        #perf-btn:hover { background: #00ffff; color: #000; }
+        #perf-btn.low-mode { border-color: #ff4444; color: #ff4444; box-shadow: none; }
+        
         .modal {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 100;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-            animation: fadeIn 0.3s;
-            pointer-events: auto;
-            backdrop-filter: blur(5px);
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 100; flex-direction: column;
+            align-items: center; justify-content: center; padding: 20px;
+            box-sizing: border-box; text-align: center; animation: fadeIn 0.3s;
+            pointer-events: auto; backdrop-filter: blur(5px);
         }
 
-        #win-modal {
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: none;
-        }
+        #win-modal { background: rgba(0,0,0,0.3); backdrop-filter: none; }
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
 
         .btn {
             background: linear-gradient(180deg, #00ff88, #008844);
-            border: 2px solid #fff;
-            border-radius: 8px;
-            padding: 15px;
-            color: white;
-            font-family: 'Russo One', sans-serif;
-            font-size: 1.2rem;
-            margin: 10px 0;
-            cursor: pointer;
-            width: 100%;
-            max-width: 300px;
+            border: 2px solid #fff; border-radius: 8px; padding: 15px;
+            color: white; font-family: 'Russo One', sans-serif; font-size: 1.2rem;
+            margin: 10px 0; cursor: pointer; width: 100%; max-width: 300px;
             box-shadow: 0 6px 0 #004422, 0 15px 20px rgba(0,0,0,0.5);
-            text-shadow: 1px 1px 0 #000;
-            transition: transform 0.1s, filter 0.1s;
-            position: relative;
-            overflow: hidden;
+            text-shadow: 1px 1px 0 #000; transition: transform 0.1s, filter 0.1s;
+            position: relative; overflow: hidden;
         }
         .btn:hover { filter: brightness(1.2); }
         .btn:active { transform: translateY(6px); box-shadow: 0 0 0 #004422; }
@@ -177,71 +136,29 @@
         }
         .btn-copy:active { box-shadow: 0 0 0 #003366; }
 
-        /* Performance Toggle Button */
-        #perf-btn {
-            background: transparent;
-            border: 2px solid #555;
-            color: #888;
-            font-size: 0.9rem;
-            padding: 8px 15px;
-            margin-top: 20px;
-            cursor: pointer;
-            border-radius: 20px;
-            text-transform: uppercase;
-            transition: all 0.2s;
-            pointer-events: auto;
-        }
-        #perf-btn:hover { border-color: #fff; color: #fff; }
-        #perf-btn.active { border-color: #00ff00; color: #00ff00; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
-
-        .key-container {
-            margin: 20px 0;
-            width: 100%;
-            max-width: 350px;
-        }
+        .key-container { margin: 20px 0; width: 100%; max-width: 350px; }
 
         .key-box {
-            background: #111;
-            border: 2px dashed #00ffff;
-            color: #fff;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 1.1rem;
-            user-select: text;
-            word-break: break-all;
+            background: #111; border: 2px dashed #00ffff; color: #fff;
+            padding: 15px; font-family: monospace; font-size: 1.1rem;
+            user-select: text; word-break: break-all;
             box-shadow: 0 0 30px rgba(0,255,255,0.1);
-            border-radius: 8px;
-            margin-bottom: 10px;
-            position: relative;
+            border-radius: 8px; margin-bottom: 10px; position: relative;
         }
 
-        .key-label {
-            font-size: 0.8rem;
-            color: #aaa;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+        .key-label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
 
         #flash-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.1s;
-            z-index: 50;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; opacity: 0; pointer-events: none;
+            transition: opacity 0.1s; z-index: 50;
         }
         
         #warp-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 100%);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            z-index: 40;
-            mix-blend-mode: overlay;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+            z-index: 40; mix-blend-mode: overlay;
         }
     </style>
 </head>
@@ -266,8 +183,8 @@
 
             <div id="main-menu">
                 <h1 id="title" class="glitch-anim">POWA<br>PROXY</h1>
-                <div style="color:#ffff00; margin-top:20px; font-size:1.4rem; text-shadow: 0 0 10px #ff0; animation:blink 0.5s infinite alternate;">TAP TO START</div>
-                <button id="perf-btn" onclick="togglePerf()">GRAPHICS: HIGH</button>
+                <div style="color:#ffff00; margin-top:15px; font-size:1.4rem; text-shadow: 0 0 10px #ff0; animation:blink 0.5s infinite alternate;">TAP TO START</div>
+                <button id="perf-btn" onclick="togglePerf(event)">GRAPHICS: HIGH</button>
             </div>
         </div>
 
@@ -309,8 +226,6 @@
         let GRAVITY = 0.6;
         let JUMP = 8.5;
         let GAP = 165; 
-        
-        // --- PERFORMANCE MODE ---
         let PERF_MODE = false;
 
         let width, height;
@@ -430,19 +345,21 @@
             }
         }
 
-        // Toggle Performance Mode
-        window.togglePerf = function() {
+        // --- PERFORMANCE TOGGLE FIX ---
+        window.togglePerf = function(e) {
+            e.stopPropagation(); // CRITICAL: Stop game from starting
             PERF_MODE = !PERF_MODE;
+            
             if(PERF_MODE) {
                 perfBtn.innerText = "GRAPHICS: LOW";
-                perfBtn.style.color = "#ff4444";
-                perfBtn.style.borderColor = "#ff4444";
-                // Clear heavy assets
+                perfBtn.className = "low-mode";
+                // Clear heavy assets instantly
                 stars = []; nebulae = []; shootingStars = []; particles = [];
+                // Force a redraw to clear the canvas
+                ctx.fillStyle = "#000"; ctx.fillRect(0,0,width,height);
             } else {
                 perfBtn.innerText = "GRAPHICS: HIGH";
-                perfBtn.style.color = "#888";
-                perfBtn.style.borderColor = "#555";
+                perfBtn.className = "";
                 initGalaxy();
                 initParticles();
             }
@@ -743,6 +660,9 @@
 
         function handleInput(e) {
             if(e.type === 'keydown' && e.code === 'Space') e.preventDefault();
+            // Don't trigger if clicking performance button
+            if(e.target.id === 'perf-btn') return;
+            
             if(gameState === 'WIN_PAUSE') return;
             if(gameState === 'START') startGame();
             else if(gameState === 'PLAY') {
