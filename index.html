@@ -3,243 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>API Key Challenge</title>
+    <title>SYSTEM BREACH PROTOCOL v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #0aff0a;
+            --bg-color: #050510;
+        }
+
         body {
             margin: 0;
-            padding: 0;
-            background-color: #1a1a1a;
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* CRT Scanline Effect Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+            border: 2px solid #333;
+            background: #000;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* UI Overlays */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none; /* Prevents zooming on mobile */
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        h1 { margin-bottom: 10px; font-size: 1.2rem; text-align: center; }
-        
-        #gameCanvas {
-            border: 2px solid #555;
-            background-color: #000;
-            display: block;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        .score-display {
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 0 0 10px var(--neon-blue);
+            font-weight: 900;
         }
 
-        #scoreBoard {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #0f0;
+        .sub-text {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            margin-top: 5px;
+            letter-spacing: 2px;
         }
 
-        /* The Reward Screen (Hidden by default) */
-        #rewardScreen {
+        #start-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            animation: pulse 1.5s infinite;
+        }
+
+        #start-message h2 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--neon-pink);
+            text-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        /* The Reward Terminal */
+        #terminal-modal {
             display: none;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #111;
-            border: 2px solid #0f0;
+            width: 90%;
+            max-width: 450px;
+            background: rgba(0, 10, 20, 0.95);
+            border: 1px solid var(--neon-green);
             padding: 2rem;
+            z-index: 200;
+            box-shadow: 0 0 100px rgba(10, 255, 10, 0.2);
+            backdrop-filter: blur(5px);
             text-align: center;
-            z-index: 10;
-            box-shadow: 0 0 50px rgba(0, 255, 0, 0.2);
-            width: 80%;
-            max-width: 400px;
         }
 
-        #rewardScreen h2 { color: #0f0; margin-top: 0; }
-        
+        .terminal-header {
+            color: var(--neon-green);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+
         .key-box {
-            background: #222;
-            padding: 10px;
-            border: 1px dashed #555;
-            margin: 15px 0;
+            background: #001100;
+            color: #fff;
+            font-family: monospace;
+            padding: 15px;
+            border: 1px dashed var(--neon-green);
+            margin: 20px 0;
             word-break: break-all;
             user-select: text;
+            pointer-events: auto;
+            font-size: 1.1rem;
         }
 
-        #startMsg {
-            position: absolute;
-            color: #aaa;
-            pointer-events: none;
-            animation: blink 1s infinite;
+        @keyframes pulse {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.95); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
 
-        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shake-screen {
+            animation: shake 0.5s;
+        }
     </style>
 </head>
 <body>
 
-    <div id="scoreBoard">SCORE: 0 / 20</div>
-    <div id="startMsg">TAP or SPACE to JUMP</div>
-    <canvas id="gameCanvas"></canvas>
+    <div class="scanlines"></div>
 
-    <div id="rewardScreen">
-        <h2>ACCESS UNLOCKED</h2>
-        <p>You proved your worth.</p>
-        <div class="key-box">
-            sk-newapi-this-is-my-secret-key-12345
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui-layer">
+            <div>
+                <div class="score-display" id="scoreEl">0 / 20</div>
+                <div class="sub-text">SECURITY LAYERS BREACHED</div>
+            </div>
+            
+            <div id="start-message">
+                <h2>TAP TO INITIATE</h2>
+                <div class="sub-text">[ SPACEBAR / CLICK ]</div>
+            </div>
         </div>
-        <p style="font-size: 0.8rem; color: #666;">Don't share this key, or I'll reset it.</p>
+    </div>
+
+    <div id="terminal-modal">
+        <div class="terminal-header">ACCESS GRANTED</div>
+        <p style="color: #ccc; font-size: 0.9rem;">ROOT PRIVILEGES CONFIRMED.</p>
+        <div class="key-box">
+            sk-newapi-REPLACE-THIS-WITH-YOUR-REAL-KEY
+        </div>
+        <div class="sub-text" style="color: var(--neon-green)">SESSION SECURE</div>
     </div>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const scoreEl = document.getElementById("scoreBoard");
-        const rewardScreen = document.getElementById("rewardScreen");
-        const startMsg = document.getElementById("startMsg");
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreEl');
+        const startMsg = document.getElementById('start-message');
+        const container = document.getElementById('game-container');
+        const terminal = document.getElementById('terminal-modal');
 
-        // Game Settings
-        const WIN_SCORE = 20;
+        // --- GAME CONFIG (HARD MODE) ---
+        const WIN_SCORE = 20;  // THE GOAL
+        const GRAVITY = 0.25;
+        const JUMP = 4.5;
+        const SPEED = 2.5;
+        const GAP = 145; // Slight increase to make 20 score less frustrating
+        
+        // Resize logic
+        let width = 360;
+        let height = 600;
+        if(window.innerWidth < 400) { width = window.innerWidth - 20; height = window.innerHeight - 100; }
+        canvas.width = width;
+        canvas.height = height;
+
         let frames = 0;
         let score = 0;
-        let gameRunning = false;
-        let gameOver = false;
+        let gameState = 'START';
+        let particles = [];
 
-        // Resize Canvas nicely
-        canvas.width = 320;
-        canvas.height = 480;
+        // Audio System
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
 
-        // Bird Object
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'jump') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // Lower volume
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'score') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime + 0.05);
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'die') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- OBJECTS ---
         const bird = {
             x: 50,
-            y: 150,
+            y: 200,
             w: 20,
             h: 20,
-            radius: 10,
             speed: 0,
-            gravity: 0.25,
-            jump: 4.6
+            draw: function() {
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#00f3ff";
+                ctx.fillStyle = "#00f3ff";
+                ctx.fillRect(this.x, this.y, this.w, this.h);
+                ctx.shadowBlur = 0;
+                
+                // Trail effect
+                if(frames % 5 === 0) {
+                    particles.push({x: this.x, y: this.y + 10, size: 4, life: 20});
+                }
+            },
+            update: function() {
+                this.speed += GRAVITY;
+                this.y += this.speed;
+            }
         };
 
-        // Pipes Array
-        const pipes = [];
-        const pipeWidth = 40;
-        const pipeGap = 120; // Increase this to make it easier, Decrease for hard mode
-        let dx = 2; // Pipe speed
-
-        function drawBird() {
-            ctx.fillStyle = "#ffcc00"; // Yellow Bird
-            ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
-        }
-
-        function drawPipes() {
-            for (let i = 0; i < pipes.length; i++) {
-                let p = pipes[i];
-                ctx.fillStyle = "#0f0"; // Green Pipes
-                
-                // Top Pipe
-                ctx.fillRect(p.x, 0, pipeWidth, p.top);
-                // Bottom Pipe
-                ctx.fillRect(p.x, canvas.height - p.bottom, pipeWidth, p.bottom);
-
-                // Move Pipe
-                p.x -= dx;
-
-                // Remove off-screen pipes
-                if (p.x + pipeWidth < 0) {
-                    pipes.shift();
-                    score++;
-                    scoreEl.innerText = `SCORE: ${score} / ${WIN_SCORE}`;
+        const pipes = {
+            data: [],
+            draw: function() {
+                for(let i=0; i<this.data.length; i++) {
+                    let p = this.data[i];
+                    ctx.strokeStyle = "#ff00ff";
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = "#ff00ff";
                     
-                    // WIN CONDITION CHECK
-                    if (score >= WIN_SCORE) {
-                        winGame();
-                    }
+                    ctx.strokeRect(p.x, 0, p.w, p.top);
+                    ctx.strokeRect(p.x, height - p.bottom, p.w, p.bottom);
+                    
+                    ctx.fillStyle = "rgba(255, 0, 255, 0.1)";
+                    ctx.fillRect(p.x, 0, p.w, p.top);
+                    ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
+                    
+                    ctx.shadowBlur = 0;
+                }
+            },
+            update: function() {
+                if(frames % 120 === 0) {
+                    // Smart Pipe Generation (Prevent impossible gaps)
+                    let minHeight = 50;
+                    let maxHeight = height - GAP - minHeight;
+                    let topH = Math.random() * (maxHeight - minHeight) + minHeight;
+                    
+                    this.data.push({
+                        x: width,
+                        w: 50,
+                        top: topH,
+                        bottom: height - GAP - topH
+                    });
                 }
 
-                // Collision Detection
-                if (
-                    bird.x < p.x + pipeWidth &&
-                    bird.x + bird.w > p.x &&
-                    (bird.y < p.top || bird.y + bird.h > canvas.height - p.bottom)
-                ) {
-                    resetGame();
+                for(let i=0; i<this.data.length; i++) {
+                    let p = this.data[i];
+                    p.x -= SPEED;
+
+                    // Collision
+                    if(
+                        bird.x < p.x + p.w &&
+                        bird.x + bird.w > p.x &&
+                        (bird.y < p.top || bird.y + bird.h > height - p.bottom)
+                    ) {
+                        gameOver();
+                    }
+
+                    // Score
+                    if(p.x + p.w < bird.x && !p.passed) {
+                        score++;
+                        scoreEl.innerText = `${score} / ${WIN_SCORE}`;
+                        p.passed = true;
+                        playSound('score');
+                        if(score >= WIN_SCORE) gameWin();
+                    }
+
+                    if(p.x + p.w < 0) this.data.shift();
                 }
+            }
+        };
+
+        function drawBackground() {
+            ctx.strokeStyle = "rgba(0, 243, 255, 0.1)";
+            ctx.lineWidth = 1;
+            
+            let offset = frames * (SPEED/2) % 40;
+            for(let x = -offset; x < width; x+=40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for(let y = 0; y < height; y+=40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
             }
         }
 
+        function drawParticles() {
+            for(let i=0; i<particles.length; i++) {
+                let p = particles[i];
+                ctx.fillStyle = `rgba(0, 243, 255, ${p.life/20})`;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                p.x -= SPEED;
+                p.life--;
+            }
+            particles = particles.filter(p => p.life > 0);
+        }
+
+        // --- GAME LOGIC ---
         function loop() {
-            if (!gameRunning) return;
+            if(gameState !== 'PLAYING') return;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#050510";
+            ctx.fillRect(0,0,width,height);
 
-            // Bird Physics
-            bird.speed += bird.gravity;
-            bird.y += bird.speed;
+            drawBackground();
+            pipes.update();
+            pipes.draw();
+            bird.update();
+            bird.draw();
+            drawParticles();
 
-            // Floor/Ceiling Collision
-            if (bird.y + bird.h >= canvas.height || bird.y < 0) {
-                resetGame();
+            if(bird.y + bird.h >= height || bird.y < 0) {
+                gameOver();
             }
 
-            drawBird();
-            
-            // Pipe Logic
-            if (frames % 100 === 0) { // Spawn rate
-                let topHeight = Math.random() * (canvas.height / 2);
-                // Ensure min pipe height
-                if(topHeight < 40) topHeight = 40; 
-                
-                pipes.push({
-                    x: canvas.width,
-                    top: topHeight,
-                    bottom: canvas.height - topHeight - pipeGap
-                });
-            }
-            
-            drawPipes();
             frames++;
             requestAnimationFrame(loop);
         }
 
-        function resetGame() {
-            bird.y = 150;
+        function reset() {
+            bird.y = height / 2;
             bird.speed = 0;
-            pipes.length = 0;
+            pipes.data = [];
             score = 0;
             frames = 0;
-            scoreEl.innerText = `SCORE: 0 / ${WIN_SCORE}`;
-            // Optional: Add a "Flash" effect or sound here
+            scoreEl.innerText = `0 / ${WIN_SCORE}`;
+            scoreEl.style.color = "var(--neon-blue)";
+            gameState = 'START';
+            startMsg.style.display = 'block';
+            
+            ctx.fillStyle = "#050510";
+            ctx.fillRect(0,0,width,height);
+            drawBackground();
+            bird.draw();
         }
 
-        function winGame() {
-            gameRunning = false;
-            canvas.style.opacity = "0.2";
-            rewardScreen.style.display = "block";
-            scoreEl.innerText = "VICTORY!";
-            scoreEl.style.color = "gold";
+        function startGame() {
+            if(gameState === 'PLAYING') return;
+            gameState = 'PLAYING';
+            startMsg.style.display = 'none';
+            playSound('jump');
+            loop();
         }
 
-        // Input Handling
+        function gameOver() {
+            gameState = 'END';
+            playSound('die');
+            scoreEl.style.color = "red";
+            container.classList.add('shake-screen');
+            setTimeout(() => container.classList.remove('shake-screen'), 500);
+            setTimeout(reset, 1000);
+        }
+
+        function gameWin() {
+            gameState = 'WIN';
+            terminal.style.display = 'block';
+            playSound('score');
+        }
+
         function jump(e) {
             if (e.type === 'keydown' && e.code !== 'Space') return;
-            if (rewardScreen.style.display === "block") return; // Stop jumping after win
+            e.preventDefault(); 
+            
+            if(gameState === 'WIN') return;
 
-            if (!gameRunning) {
-                gameRunning = true;
-                startMsg.style.display = 'none';
-                loop();
+            if(gameState === 'START' || gameState === 'END') {
+                startGame();
             }
-            bird.speed = -bird.jump;
+            
+            bird.speed = -JUMP;
+            playSound('jump');
         }
 
-        // Event Listeners
-        window.addEventListener("keydown", jump);
-        window.addEventListener("touchstart", jump);
-        window.addEventListener("mousedown", jump);
+        window.addEventListener('keydown', jump);
+        window.addEventListener('mousedown', jump);
+        window.addEventListener('touchstart', jump, {passive: false});
 
-        // Initial Draw
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0,0,canvas.width, canvas.height);
-        drawBird();
+        reset();
 
     </script>
 </body>
