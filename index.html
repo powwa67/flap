@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>API Key Challenge</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Prevents zooming on mobile */
+        }
+
+        h1 { margin-bottom: 10px; font-size: 1.2rem; text-align: center; }
+        
+        #gameCanvas {
+            border: 2px solid #555;
+            background-color: #000;
+            display: block;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #scoreBoard {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #0f0;
+        }
+
+        /* The Reward Screen (Hidden by default) */
+        #rewardScreen {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 2rem;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.2);
+            width: 80%;
+            max-width: 400px;
+        }
+
+        #rewardScreen h2 { color: #0f0; margin-top: 0; }
+        
+        .key-box {
+            background: #222;
+            padding: 10px;
+            border: 1px dashed #555;
+            margin: 15px 0;
+            word-break: break-all;
+            user-select: text;
+        }
+
+        #startMsg {
+            position: absolute;
+            color: #aaa;
+            pointer-events: none;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+    <div id="scoreBoard">SCORE: 0 / 20</div>
+    <div id="startMsg">TAP or SPACE to JUMP</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="rewardScreen">
+        <h2>ACCESS UNLOCKED</h2>
+        <p>You proved your worth.</p>
+        <div class="key-box">
+            sk-newapi-this-is-my-secret-key-12345
+        </div>
+        <p style="font-size: 0.8rem; color: #666;">Don't share this key, or I'll reset it.</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("scoreBoard");
+        const rewardScreen = document.getElementById("rewardScreen");
+        const startMsg = document.getElementById("startMsg");
+
+        // Game Settings
+        const WIN_SCORE = 20;
+        let frames = 0;
+        let score = 0;
+        let gameRunning = false;
+        let gameOver = false;
+
+        // Resize Canvas nicely
+        canvas.width = 320;
+        canvas.height = 480;
+
+        // Bird Object
+        const bird = {
+            x: 50,
+            y: 150,
+            w: 20,
+            h: 20,
+            radius: 10,
+            speed: 0,
+            gravity: 0.25,
+            jump: 4.6
+        };
+
+        // Pipes Array
+        const pipes = [];
+        const pipeWidth = 40;
+        const pipeGap = 120; // Increase this to make it easier, Decrease for hard mode
+        let dx = 2; // Pipe speed
+
+        function drawBird() {
+            ctx.fillStyle = "#ffcc00"; // Yellow Bird
+            ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
+        }
+
+        function drawPipes() {
+            for (let i = 0; i < pipes.length; i++) {
+                let p = pipes[i];
+                ctx.fillStyle = "#0f0"; // Green Pipes
+                
+                // Top Pipe
+                ctx.fillRect(p.x, 0, pipeWidth, p.top);
+                // Bottom Pipe
+                ctx.fillRect(p.x, canvas.height - p.bottom, pipeWidth, p.bottom);
+
+                // Move Pipe
+                p.x -= dx;
+
+                // Remove off-screen pipes
+                if (p.x + pipeWidth < 0) {
+                    pipes.shift();
+                    score++;
+                    scoreEl.innerText = `SCORE: ${score} / ${WIN_SCORE}`;
+                    
+                    // WIN CONDITION CHECK
+                    if (score >= WIN_SCORE) {
+                        winGame();
+                    }
+                }
+
+                // Collision Detection
+                if (
+                    bird.x < p.x + pipeWidth &&
+                    bird.x + bird.w > p.x &&
+                    (bird.y < p.top || bird.y + bird.h > canvas.height - p.bottom)
+                ) {
+                    resetGame();
+                }
+            }
+        }
+
+        function loop() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Bird Physics
+            bird.speed += bird.gravity;
+            bird.y += bird.speed;
+
+            // Floor/Ceiling Collision
+            if (bird.y + bird.h >= canvas.height || bird.y < 0) {
+                resetGame();
+            }
+
+            drawBird();
+            
+            // Pipe Logic
+            if (frames % 100 === 0) { // Spawn rate
+                let topHeight = Math.random() * (canvas.height / 2);
+                // Ensure min pipe height
+                if(topHeight < 40) topHeight = 40; 
+                
+                pipes.push({
+                    x: canvas.width,
+                    top: topHeight,
+                    bottom: canvas.height - topHeight - pipeGap
+                });
+            }
+            
+            drawPipes();
+            frames++;
+            requestAnimationFrame(loop);
+        }
+
+        function resetGame() {
+            bird.y = 150;
+            bird.speed = 0;
+            pipes.length = 0;
+            score = 0;
+            frames = 0;
+            scoreEl.innerText = `SCORE: 0 / ${WIN_SCORE}`;
+            // Optional: Add a "Flash" effect or sound here
+        }
+
+        function winGame() {
+            gameRunning = false;
+            canvas.style.opacity = "0.2";
+            rewardScreen.style.display = "block";
+            scoreEl.innerText = "VICTORY!";
+            scoreEl.style.color = "gold";
+        }
+
+        // Input Handling
+        function jump(e) {
+            if (e.type === 'keydown' && e.code !== 'Space') return;
+            if (rewardScreen.style.display === "block") return; // Stop jumping after win
+
+            if (!gameRunning) {
+                gameRunning = true;
+                startMsg.style.display = 'none';
+                loop();
+            }
+            bird.speed = -bird.jump;
+        }
+
+        // Event Listeners
+        window.addEventListener("keydown", jump);
+        window.addEventListener("touchstart", jump);
+        window.addEventListener("mousedown", jump);
+
+        // Initial Draw
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+        drawBird();
+
+    </script>
+</body>
+</html>
