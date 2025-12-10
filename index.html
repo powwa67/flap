@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GEOMETRY GATE: HYPER</title>
+    <title>POWA-PROXY</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -82,14 +82,15 @@
             box-sizing: border-box;
         }
 
-        #lives-display {
+        #timer-display {
+            display: none; /* Hidden by default */
             color: #fff;
             font-size: 1.4rem;
-            text-shadow: 0 0 10px var(--gd-blue);
-            background: rgba(0,0,0,0.7);
+            text-shadow: 0 0 10px #ff0000;
+            background: rgba(50,0,0,0.8);
             padding: 8px 15px;
             border-radius: 8px;
-            border: 2px solid rgba(255,255,255,0.2);
+            border: 2px solid #ff0000;
             backdrop-filter: blur(4px);
         }
 
@@ -129,9 +130,9 @@
 
         h1 {
             color: #fff;
-            font-size: 4rem;
+            font-size: 3.5rem;
             margin: 0;
-            line-height: 0.85;
+            line-height: 0.95;
             text-shadow: 4px 4px 0px #000, 0 0 40px var(--gd-blue);
             -webkit-text-stroke: 2px #000;
             transform: skew(-5deg);
@@ -178,6 +179,7 @@
         }
         .btn:hover { filter: brightness(1.2); }
         .btn:active { transform: translateY(6px); box-shadow: 0 0 0 #004422; }
+        .btn:disabled { filter: grayscale(1); cursor: not-allowed; transform: none; box-shadow: none; border-color: #555; background: #333; }
         
         /* Copy Button Special Style */
         .btn-copy {
@@ -244,7 +246,7 @@
         
         <div id="ui-layer">
             <div id="top-bar">
-                <div id="lives-display">♥ 10</div>
+                <div id="timer-display">5:00</div>
                 <div id="progress-container">
                     <div id="progress-bar">
                         <div id="progress-fill"></div>
@@ -253,7 +255,7 @@
             </div>
 
             <div id="main-menu">
-                <h1 id="title" class="glitch-anim">GALAXY<br>GATE</h1>
+                <h1 id="title" class="glitch-anim">POWA<br>PROXY</h1>
                 <div style="color:#ffff00; margin-top:20px; font-size:1.4rem; text-shadow: 0 0 10px #ff0; animation:blink 0.5s infinite alternate;">TAP TO JUMP</div>
             </div>
         </div>
@@ -271,17 +273,17 @@
             
             <div style="background:rgba(50,0,0,0.8); padding:20px; border-radius:12px; border:2px solid #f00; width:100%; max-width:340px; box-shadow: inset 0 0 30px rgba(255,0,0,0.2);">
                 <p style="color:#ff4444; font-weight:bold; font-size:1.8rem; margin:0; text-shadow: 0 0 10px #f00;">ENTER HELL</p>
-                <p style="font-size:0.9rem; color:#fff; margin-bottom:10px;">Target: 50 | Speed: ULTRA</p>
-                <p style="font-size:0.8rem; color:#ffaaaa; margin-bottom:15px;">"Die once, lose everything."</p>
-                <button class="btn btn-demon" onclick="startDemon()">RISK IT (7-DAY KEY)</button>
+                <p style="font-size:0.9rem; color:#fff; margin-bottom:10px;">Target: 50 | Time: 5 Mins</p>
+                <p style="font-size:0.8rem; color:#ffaaaa; margin-bottom:15px;">"Fail here = Back to Level 1"</p>
+                <button id="btn-demon" class="btn btn-demon" onclick="startDemon()">RISK IT (7-DAY KEY)</button>
             </div>
         </div>
 
-        <div id="perma-death-modal" class="modal">
-            <h1 style="color:#f00; font-size:4rem; text-shadow:0 0 40px #f00; margin-bottom: 0;">FAILURE</h1>
-            <p style="color:#fff; font-size:1.2rem; letter-spacing: 3px;">SYSTEM LOCKDOWN</p>
+        <div id="death-modal" class="modal">
+            <h1 id="death-title" style="color:#f00; font-size:3rem; text-shadow:0 0 30px #f00; margin-bottom: 0;">BRUH</h1>
+            <p id="death-sub" style="color:#fff; font-size:1rem; margin-top:10px; max-width: 80%;">...</p>
             <div style="width: 200px; height: 4px; background: #333; margin: 20px 0;"></div>
-            <button class="btn" style="background: linear-gradient(180deg, #555, #222); border-color:#888; box-shadow: 0 6px 0 #111;" onclick="fullReset()">REBOOT SYSTEM</button>
+            <button id="death-btn" class="btn" style="background: linear-gradient(180deg, #555, #222); border-color:#888;" onclick="handleDeathAction()">RETRY</button>
         </div>
 
         <div id="win-std" class="modal">
@@ -309,24 +311,28 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const titleEl = document.getElementById('title');
-        const livesEl = document.getElementById('lives-display');
+        const timerEl = document.getElementById('timer-display');
         const progressFill = document.getElementById('progress-fill');
         const wrapper = document.getElementById('game-wrapper');
         const flashOverlay = document.getElementById('flash-overlay');
         
         const offerModal = document.getElementById('offer-modal');
-        const permaDeathModal = document.getElementById('perma-death-modal');
+        const deathModal = document.getElementById('death-modal');
+        const deathTitle = document.getElementById('death-title');
+        const deathSub = document.getElementById('death-sub');
+        const deathBtn = document.getElementById('death-btn');
         const winStdModal = document.getElementById('win-std');
         const winDemModal = document.getElementById('win-demon');
+        const btnDemon = document.getElementById('btn-demon');
 
         // --- GAME CONFIG ---
         let MODE = 'NORMAL'; 
-        let LIVES = 10;
         let TARGET_SCORE = 30;
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
         let GAP = 170;
+        let TIMER = 300; // 5 minutes in seconds
 
         let width, height;
         function resize() {
@@ -342,13 +348,16 @@
         let frames = 0;
         let score = 0;
         let gameState = 'START';
-        let globalHue = 0; // The heartbeat of the game color
-        let bgOffset = 0;  // For scrolling grid
+        let globalHue = 0; 
+        let bgOffset = 0;  
+        let timerInterval = null;
+        let cooldownInterval = null;
         
         // --- ASSETS ---
         let particles = []; 
-        let trail = [];     // Ribbon trail
+        let trail = [];     
         let shockwaves = [];
+        let floatTexts = []; // "POW", "GOOD ONE"
         
         // --- COPY FUNCTION ---
         async function copyKey(elementId, btnElement) {
@@ -386,7 +395,6 @@
                 }
 
                 if(gameState === 'PLAY') {
-                    // Rotate faster based on speed
                     this.rotation += 4 + (SPEED * 0.5); 
                 }
             },
@@ -412,20 +420,16 @@
                 ctx.translate(this.x + this.size/2, this.y + this.size/2);
                 ctx.rotate(this.rotation * Math.PI / 180);
                 
-                // Outer Glow
                 ctx.shadowBlur = 20;
                 ctx.shadowColor = MODE === 'DEMON' ? '#ff0000' : `hsl(${globalHue}, 100%, 50%)`;
                 
-                // Main Body
                 ctx.fillStyle = "#000";
                 ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
                 
-                // Border
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = "#fff";
                 ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
                 
-                // Inner Center (The "Eye")
                 let eyeOffset = Math.sin(frames * 0.2) * 2;
                 ctx.fillStyle = MODE === 'DEMON' ? '#f00' : '#0ff';
                 ctx.fillRect(-6 + eyeOffset, -6 - eyeOffset, 12, 12);
@@ -443,11 +447,10 @@
                     let minH = 60;
                     let maxH = height - GAP - minH;
                     let topH = Math.random() * (maxH - minH) + minH;
-                    // Introduce moving obstacles in Demon mode
                     let moveY = MODE === 'DEMON' ? (Math.random() - 0.5) * 2 : 0;
                     this.list.push({
                         x: width, w: 55, top: topH, bottom: height - GAP - topH, 
-                        passed: false, moveY: moveY, id: Math.random()
+                        passed: false, moveY: moveY
                     });
                 }
 
@@ -455,11 +458,10 @@
                     p.x -= SPEED;
                     if(MODE === 'DEMON') {
                         p.top += p.moveY;
-                        // Bounce bounds
                         if(p.top < 20 || p.top > height/2) p.moveY *= -1;
                     }
 
-                    // Collision Logic (Smaller hitbox for fairness)
+                    // Collision Logic
                     let pad = 8; 
                     if(player.x+pad < p.x+p.w && player.x+player.size-pad > p.x && 
                        (player.y+pad < p.top || player.y+player.size-pad > height - p.bottom)) {
@@ -472,12 +474,21 @@
                         p.passed = true;
                         updateProgress();
                         
-                        // Score Effect
                         if(score % 5 === 0) triggerBigShake();
                         else triggerSmallShake();
                         
-                        // Spawn Shockwave
+                        // Juice: Spawn Text & Shockwave
                         shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
+                        
+                        // Random text chance
+                        if(Math.random() > 0.4) {
+                            const words = ["POW", "GOOD ONE", "PHEW", "CLOSE!", "NICE", "EZ", "WOAH"];
+                            const w = words[Math.floor(Math.random()*words.length)];
+                            floatTexts.push({
+                                text: w, x: player.x, y: player.y - 40, 
+                                life: 1.0, vy: -2
+                            });
+                        }
 
                         if(score >= TARGET_SCORE) levelWin();
                     }
@@ -494,27 +505,22 @@
                     ctx.shadowBlur = 10;
                     ctx.shadowColor = mainColor;
 
-                    // Gradient Fill
                     let grad = ctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
                     grad.addColorStop(0, glowColor);
                     grad.addColorStop(1, "#000");
 
-                    // Top Pillar
+                    // Top
                     ctx.fillStyle = grad;
                     ctx.fillRect(p.x, 0, p.w, p.top);
                     ctx.strokeRect(p.x, -5, p.w, p.top+5);
-                    
-                    // Detail Lines
                     ctx.fillStyle = mainColor;
                     ctx.fillRect(p.x + 10, p.top - 20, p.w - 20, 5);
                     ctx.fillRect(p.x + 10, p.top - 40, p.w - 20, 5);
 
-                    // Bottom Pillar
+                    // Bottom
                     ctx.fillStyle = grad;
                     ctx.fillRect(p.x, height-p.bottom, p.w, p.bottom);
                     ctx.strokeRect(p.x, height-p.bottom, p.w, p.bottom+5);
-                    
-                    // Detail Lines
                     ctx.fillStyle = mainColor;
                     ctx.fillRect(p.x + 10, height - p.bottom + 15, p.w - 20, 5);
                     ctx.fillRect(p.x + 10, height - p.bottom + 35, p.w - 20, 5);
@@ -526,7 +532,6 @@
 
         // --- VFX FUNCTIONS ---
         function drawGridBackground() {
-            // Background Base
             let bgColor = MODE === 'DEMON' ? '#1a0000' : '#050510';
             ctx.fillStyle = bgColor;
             ctx.fillRect(0,0,width,height);
@@ -538,25 +543,18 @@
             let gridColor = MODE === 'DEMON' ? 'rgba(255, 0, 0, 0.2)' : `hsla(${globalHue}, 100%, 50%, 0.15)`;
             ctx.strokeStyle = gridColor;
 
-            // Perspective Grid
             ctx.beginPath();
-            // Vertical moving lines
             for(let i = 0; i <= width + 100; i += 100) {
                 let x = i + bgOffset;
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
+                ctx.moveTo(x, 0); ctx.lineTo(x, height);
             }
-            // Horizontal perspective lines
             for(let i = 0; i <= height; i += 80) {
-                ctx.moveTo(0, i);
-                ctx.lineTo(width, i);
+                ctx.moveTo(0, i); ctx.lineTo(width, i);
             }
             ctx.stroke();
 
-            // Floating Particles
             ctx.fillStyle = "#fff";
             for(let p of particles) {
-                // Background stars/dust
                 if(p.type === 'dust') {
                     p.x -= p.speed;
                     if(p.x < 0) p.x = width;
@@ -601,31 +599,77 @@
             progressFill.style.background = MODE === 'DEMON' ? 
                 `linear-gradient(90deg, #f00, #ff0)` : `linear-gradient(90deg, #0ff, #b0f)`;
         }
+        
+        // --- TIMER LOGIC ---
+        function startTimer() {
+            stopTimer();
+            if(MODE !== 'DEMON') return;
+            
+            TIMER = 300; // 5 mins
+            updateTimerDisplay();
+            timerEl.style.display = 'block';
+            
+            timerInterval = setInterval(() => {
+                TIMER--;
+                updateTimerDisplay();
+                if(TIMER <= 0) {
+                    stopTimer();
+                    die(true); // True means timeout death
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if(timerInterval) clearInterval(timerInterval);
+            timerEl.style.display = 'none';
+        }
+
+        function updateTimerDisplay() {
+            let m = Math.floor(TIMER / 60);
+            let s = TIMER % 60;
+            timerEl.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        }
 
         // --- CORE LOGIC ---
-        function die() {
-            LIVES--;
-            livesEl.innerText = `♥ ${LIVES}`;
-            livesEl.style.color = "#f00";
-            
+        function die(isTimeout = false) {
+            stopTimer();
             flashScreen();
             triggerBigShake();
             createExplosion(player.x, player.y, MODE==='DEMON'?'#f00':'#0ff');
             
             gameState = 'DIE_ANIM';
             
+            // Text Logic
+            if(MODE === 'NORMAL') {
+                deathTitle.innerText = "bruh.. really?";
+                deathSub.innerText = "just go back to jllm atp fam";
+                deathBtn.innerText = "TRY AGAIN";
+            } else {
+                deathTitle.innerText = "lol";
+                deathSub.innerText = isTimeout ? "TIME IS UP" : "BACK TO START";
+                deathBtn.innerText = "RESTART SYSTEM";
+            }
+
             setTimeout(() => {
-                if(LIVES <= 0) permaDeathModal.style.display = 'flex';
-                else resetLevel();
+                deathModal.style.display = 'flex';
             }, 900);
         }
+        
+        window.handleDeathAction = function() {
+            deathModal.style.display = 'none';
+            if(MODE === 'NORMAL') {
+                resetLevel(); // Just restart level 1
+            } else {
+                fullReset(); // Back to start from hell
+            }
+        };
 
         function loop() {
             if(gameState !== 'PLAY' && gameState !== 'DIE_ANIM') return;
             
             // Color Cycling
             if(MODE === 'NORMAL') globalHue = (globalHue + 1) % 360;
-            else globalHue = 0; // Red only for demon
+            else globalHue = 0;
 
             frames++;
 
@@ -639,6 +683,24 @@
                 ctx.beginPath(); ctx.arc(s.x + 15, s.y + 15, s.r, 0, Math.PI*2); ctx.stroke();
             }
             shockwaves = shockwaves.filter(s => s.alpha > 0);
+            
+            // Draw Floating Texts
+            ctx.font = "900 24px 'Russo One'";
+            ctx.textAlign = "center";
+            for(let f of floatTexts) {
+                f.y += f.vy; f.life -= 0.02;
+                ctx.save();
+                ctx.fillStyle = "#fff";
+                ctx.strokeStyle = "#000";
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = MODE === 'DEMON' ? '#f00' : '#0ff';
+                ctx.globalAlpha = f.life;
+                ctx.strokeText(f.text, f.x, f.y);
+                ctx.fillText(f.text, f.x, f.y);
+                ctx.restore();
+            }
+            floatTexts = floatTexts.filter(f => f.life > 0);
 
             if(gameState === 'PLAY') {
                 obstacles.update();
@@ -680,22 +742,24 @@
         function resetLevel() {
             gameState = 'START';
             player.y = height/2; player.velocity = 0; player.rotation = 0;
-            obstacles.list = []; trail = []; shockwaves = [];
+            obstacles.list = []; trail = []; shockwaves = []; floatTexts = [];
             score = 0; frames = 0;
             updateProgress();
-            livesEl.style.color = "#fff";
+            stopTimer();
             
             initParticles();
             
-            // Initial Draw
             drawGridBackground();
             player.draw();
             
             document.getElementById('main-menu').style.display = 'block';
-            titleEl.innerHTML = MODE === 'NORMAL' ? "GALAXY<br>GATE" : "HELL<br>GATE";
+            titleEl.innerHTML = MODE === 'NORMAL' ? "POWA<br>PROXY" : "HELL<br>MODE";
             titleEl.className = MODE === 'NORMAL' ? "glitch-anim" : "";
             titleEl.style.color = MODE === 'NORMAL' ? "#fff" : "#f00";
-            if(MODE === 'DEMON') titleEl.style.textShadow = "0 0 40px #f00";
+            if(MODE === 'DEMON') {
+                titleEl.style.textShadow = "0 0 40px #f00";
+                startTimer();
+            }
         }
 
         function startGame() {
@@ -708,12 +772,33 @@
 
         function levelWin() {
             gameState = 'WIN';
-            // Final burst
+            stopTimer();
             createExplosion(player.x, player.y, '#fff');
             flashScreen();
             
-            if(MODE === 'NORMAL') offerModal.style.display = 'flex';
-            else winDemModal.style.display = 'flex';
+            if(MODE === 'NORMAL') {
+                offerModal.style.display = 'flex';
+                // 10 Second Cooldown Logic
+                let waitTime = 10;
+                btnDemon.disabled = true;
+                btnDemon.style.filter = "grayscale(1)";
+                btnDemon.innerText = `WAIT (${waitTime}s)`;
+                
+                if(cooldownInterval) clearInterval(cooldownInterval);
+                cooldownInterval = setInterval(() => {
+                    waitTime--;
+                    btnDemon.innerText = `WAIT (${waitTime}s)`;
+                    if(waitTime <= 0) {
+                        clearInterval(cooldownInterval);
+                        btnDemon.disabled = false;
+                        btnDemon.style.filter = "none";
+                        btnDemon.innerText = "RISK IT (7-DAY KEY)";
+                    }
+                }, 1000);
+                
+            } else {
+                winDemModal.style.display = 'flex';
+            }
         }
 
         // --- CONTROLS & EVENTS ---
@@ -734,27 +819,24 @@
         };
 
         window.fullReset = function() {
-            permaDeathModal.style.display = 'none';
+            deathModal.style.display = 'none'; // Ensure death modal is gone
+            permaDeathModal = null; // Cleanup ref if needed
             MODE = 'NORMAL';
-            LIVES = 10;
             TARGET_SCORE = 30;
             SPEED = 6.5;      
             GAP = 170;
-            livesEl.innerText = `♥ 10`;
             wrapper.style.borderColor = "#fff";
             wrapper.style.boxShadow = "0 0 60px rgba(0,255,255,0.3)";
             resetLevel();
         };
 
         function handleInput(e) {
-            // Prevent scrolling on spacebar
             if(e.type === 'keydown' && e.code === 'Space') e.preventDefault();
             
             if(gameState === 'WIN') return;
             if(gameState === 'START') startGame();
             else if(gameState === 'PLAY') {
                 player.velocity = -JUMP;
-                // Add jump particles
                 for(let i=0; i<5; i++) {
                     particles.push({
                         type: 'explode',
