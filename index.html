@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POWA-PROXY: GALAXY</title>
+    <title>POWA-PROXY: MULTIVERSE</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         body {
@@ -30,6 +30,7 @@
             max-height: 95vh;
             background: #000;
             overflow: hidden;
+            transition: box-shadow 0.5s, border-color 0.5s;
         }
 
         /* GIF Overlays */
@@ -141,10 +142,9 @@
             backdrop-filter: blur(5px);
         }
 
-        /* Specific style for Win Modal to show GIF clearly */
         #win-modal {
-            background: rgba(0,0,0,0.3); /* Low opacity */
-            backdrop-filter: none; /* NO BLUR */
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: none;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
@@ -214,6 +214,17 @@
             transition: opacity 0.1s;
             z-index: 50;
         }
+        
+        #warp-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 40;
+            mix-blend-mode: overlay;
+        }
     </style>
 </head>
 <body>
@@ -224,6 +235,7 @@
 
         <canvas id="gameCanvas"></canvas>
         <div id="flash-overlay"></div>
+        <div id="warp-overlay"></div>
         
         <div id="ui-layer">
             <div id="top-bar">
@@ -263,6 +275,7 @@
         const progressFill = document.getElementById('progress-fill');
         const wrapper = document.getElementById('game-wrapper');
         const flashOverlay = document.getElementById('flash-overlay');
+        const warpOverlay = document.getElementById('warp-overlay');
         
         const deathModal = document.getElementById('death-modal');
         const winModal = document.getElementById('win-modal');
@@ -271,7 +284,7 @@
         const bgWin = document.getElementById('bg-win');
 
         // --- GAME CONFIG ---
-        let TARGET_SCORE = 30; // Points to win
+        let TARGET_SCORE = 30; 
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
@@ -286,6 +299,42 @@
         }
         window.addEventListener('resize', resize);
         resize();
+
+        // --- BIOMES DEFINITION ---
+        const BIOMES = [
+            { // 0-4: Deep Space (Blue/Purple)
+                bgTop: '#050010', bgBot: '#150025', 
+                grid: 'hsla(260, 100%, 50%, 0.2)', star: '#fff', nebula: 'rgba(0, 255, 255, 0.15)',
+                border: '#00ffff'
+            },
+            { // 5-9: Matrix (Green/Black)
+                bgTop: '#001000', bgBot: '#002500', 
+                grid: 'hsla(120, 100%, 50%, 0.3)', star: '#0f0', nebula: 'rgba(0, 255, 0, 0.1)',
+                border: '#00ff00'
+            },
+            { // 10-14: Red Alert (Red/Black)
+                bgTop: '#200000', bgBot: '#400000', 
+                grid: 'hsla(0, 100%, 50%, 0.3)', star: '#ffaa00', nebula: 'rgba(255, 0, 0, 0.1)',
+                border: '#ff0000'
+            },
+            { // 15-19: Ice World (Cyan/White)
+                bgTop: '#001020', bgBot: '#002040', 
+                grid: 'hsla(190, 100%, 70%, 0.3)', star: '#aaddff', nebula: 'rgba(200, 255, 255, 0.2)',
+                border: '#00ffff'
+            },
+            { // 20-24: Vaporwave (Pink/Teal)
+                bgTop: '#200020', bgBot: '#400040', 
+                grid: 'hsla(300, 100%, 50%, 0.4)', star: '#ff00ff', nebula: 'rgba(255, 0, 255, 0.15)',
+                border: '#ff00ff'
+            },
+            { // 25-30: Hyperspace (Rainbow/Black)
+                bgTop: '#000000', bgBot: '#111111', 
+                grid: 'rainbow', star: 'rainbow', nebula: 'rainbow',
+                border: '#fff'
+            }
+        ];
+
+        let currentBiome = 0;
 
         // --- AUDIO ENGINE ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -327,6 +376,11 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
                 noise.connect(gain); gain.connect(audioCtx.destination);
                 noise.start();
+            },
+            warp: () => {
+                // Warp sound effect
+                playTone(200, 'sawtooth', 0.5, 0.1);
+                playTone(400, 'sawtooth', 0.5, 0.1, 0.1);
             }
         };
 
@@ -387,6 +441,14 @@
             flashOverlay.style.opacity = 0.8;
             setTimeout(() => { flashOverlay.style.opacity = 0; }, 50);
         }
+        
+        function warpScreen() {
+            warpOverlay.style.opacity = 1;
+            SFX.warp();
+            // Speed up stars momentarily
+            stars.forEach(s => s.speed += 15);
+            setTimeout(() => { warpOverlay.style.opacity = 0; }, 300);
+        }
 
         function updateProgress() {
             let pct = Math.min(100, (score / TARGET_SCORE) * 100);
@@ -394,25 +456,71 @@
             progressFill.style.background = "linear-gradient(90deg, #00ffff, #bd00ff)";
         }
 
+        function switchBiome() {
+            let index = Math.floor(score / 5);
+            if(index >= BIOMES.length) index = BIOMES.length - 1;
+            
+            if(index !== currentBiome) {
+                currentBiome = index;
+                warpScreen();
+                // Update border color
+                let color = BIOMES[currentBiome].border;
+                wrapper.style.boxShadow = `0 0 60px ${color}4d`; // 4d = 30% alpha
+                wrapper.style.borderColor = color;
+            }
+        }
+
         // --- GALAXY ---
         function initGalaxy() {
             stars = []; nebulae = []; shootingStars = [];
             for(let i=0; i<150; i++) stars.push({x:Math.random()*width, y:Math.random()*height, size:Math.random()*2, alpha:Math.random(), speed:Math.random()*0.5+0.1});
-            for(let i=0; i<6; i++) nebulae.push({x:Math.random()*width, y:Math.random()*height, r:Math.random()*200+100, color:i%2===0?'rgba(0,255,255,0.15)':'rgba(189,0,255,0.15)', vx:(Math.random()-0.5)*0.2, vy:(Math.random()-0.5)*0.2});
+            for(let i=0; i<6; i++) nebulae.push({x:Math.random()*width, y:Math.random()*height, r:Math.random()*200+100, vx:(Math.random()-0.5)*0.2, vy:(Math.random()-0.5)*0.2});
         }
 
         function updateGalaxy() {
-            for(let s of stars) { s.x-=s.speed; if(s.x<0) s.x=width; if(Math.random()>0.99) s.alpha=Math.random(); }
+            for(let s of stars) { 
+                s.x-=s.speed; 
+                if(s.speed > 5) s.speed *= 0.9; // Drag after warp
+                if(s.x<0) s.x=width; 
+                if(Math.random()>0.99) s.alpha=Math.random(); 
+            }
             for(let n of nebulae) { n.x+=n.vx; n.y+=n.vy; if(n.x<-200) n.x=width+200; if(n.x>width+200) n.x=-200; }
             if(Math.random()>0.985) shootingStars.push({x:Math.random()*width+200, y:Math.random()*height*0.5, vx:-12, vy:4, len:Math.random()*30+10, life:1.0});
             shootingStars=shootingStars.filter(s=>{s.x+=s.vx; s.y+=s.vy; s.life-=0.02; return s.life>0;});
         }
 
         function drawGalaxy() {
-            let grad=ctx.createLinearGradient(0,0,0,height); grad.addColorStop(0,"#050010"); grad.addColorStop(1,"#150025"); ctx.fillStyle=grad; ctx.fillRect(0,0,width,height);
-            for(let n of nebulae) { ctx.save(); ctx.globalCompositeOperation="screen"; let rg=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r); rg.addColorStop(0,n.color); rg.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
-            ctx.fillStyle="#fff"; for(let s of stars) { ctx.globalAlpha=s.alpha; ctx.fillRect(s.x,s.y,s.size,s.size); } ctx.globalAlpha=1;
-            ctx.strokeStyle="#fff"; ctx.lineWidth=2; for(let s of shootingStars) { ctx.globalAlpha=s.life; ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.x-s.vx*0.5,s.y-s.vy*0.5); ctx.stroke(); } ctx.globalAlpha=1;
+            const biome = BIOMES[currentBiome];
+            
+            // 1. BG Gradient
+            let grad=ctx.createLinearGradient(0,0,0,height); 
+            grad.addColorStop(0, biome.bgTop); 
+            grad.addColorStop(1, biome.bgBot); 
+            ctx.fillStyle=grad; ctx.fillRect(0,0,width,height);
+
+            // 2. Nebulae
+            for(let n of nebulae) { 
+                ctx.save(); ctx.globalCompositeOperation="screen"; 
+                let rg=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r); 
+                let col = (biome.nebula === 'rainbow') ? `hsla(${globalHue}, 80%, 50%, 0.1)` : biome.nebula;
+                rg.addColorStop(0, col); 
+                rg.addColorStop(1,"rgba(0,0,0,0)"); 
+                ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); ctx.restore(); 
+            }
+
+            // 3. Stars
+            for(let s of stars) { 
+                ctx.fillStyle = (biome.star === 'rainbow') ? `hsl(${Math.random()*360}, 100%, 80%)` : biome.star;
+                ctx.globalAlpha=s.alpha; 
+                
+                // Stretch stars during warp
+                if(s.speed > 2) ctx.fillRect(s.x,s.y,s.size + s.speed, s.size); 
+                else ctx.fillRect(s.x,s.y,s.size,s.size); 
+            } ctx.globalAlpha=1;
+
+            // 4. Shooting Stars
+            ctx.strokeStyle="#fff"; ctx.lineWidth=2; 
+            for(let s of shootingStars) { ctx.globalAlpha=s.life; ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.x-s.vx*0.5,s.y-s.vy*0.5); ctx.stroke(); } ctx.globalAlpha=1;
         }
 
         // --- GAME OBJECTS ---
@@ -455,6 +563,10 @@
 
                     if(p.x+p.w < player.x && !p.passed) {
                         score++; p.passed = true; updateProgress(); SFX.score(); triggerShake();
+                        
+                        // Check for Biome Switch
+                        switchBiome();
+
                         shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
                         if(Math.random()>0.5) {
                             const words = ["POW", "GOOD", "NICE", "EZ", "WOAH"];
@@ -467,11 +579,13 @@
                 if(this.list.length > 0 && this.list[0].x < -100) this.list.shift();
             },
             draw: function() {
-                let mainColor = `hsl(${globalHue}, 100%, 60%)`;
-                let glowColor = `hsl(${globalHue}, 100%, 20%)`;
+                // Use biome colors for obstacles too
+                let mainColor = BIOMES[currentBiome].border;
+                if(currentBiome === 5) mainColor = `hsl(${globalHue}, 100%, 60%)`; // Rainbow
+
                 for(let p of this.list) {
                     ctx.lineWidth=3; ctx.strokeStyle="#fff"; ctx.shadowBlur=10; ctx.shadowColor=mainColor;
-                    let grad=ctx.createLinearGradient(p.x,0,p.x+p.w,0); grad.addColorStop(0,glowColor); grad.addColorStop(1,"#000");
+                    let grad=ctx.createLinearGradient(p.x,0,p.x+p.w,0); grad.addColorStop(0,mainColor); grad.addColorStop(1,"#000");
                     ctx.fillStyle=grad; ctx.fillRect(p.x,0,p.w,p.top); ctx.strokeRect(p.x,-5,p.w,p.top+5);
                     ctx.fillStyle=mainColor; ctx.fillRect(p.x+10,p.top-20,p.w-20,5);
                     ctx.fillStyle=grad; ctx.fillRect(p.x,height-p.bottom,p.w,p.bottom); ctx.strokeRect(p.x,height-p.bottom,p.w,p.bottom+5);
@@ -519,6 +633,9 @@
 
             gameState = 'START';
             score = 0; frames = 0;
+            currentBiome = 0; // Reset biome
+            wrapper.style.borderColor = "#fff";
+            wrapper.style.boxShadow = "0 0 60px rgba(0,255,255,0.3)";
             updateProgress();
             
             player.y = height/2; player.velocity = 0; player.rotation = 0;
@@ -561,9 +678,13 @@
         }
 
         function drawGridLines() {
-            ctx.lineWidth = 2; ctx.strokeStyle = `hsla(${globalHue}, 100%, 50%, 0.15)`; ctx.beginPath();
+            const biome = BIOMES[currentBiome];
+            let gridCol = (biome.grid === 'rainbow') ? `hsla(${globalHue}, 100%, 50%, 0.3)` : biome.grid;
+
+            ctx.lineWidth = 2; ctx.strokeStyle = gridCol; ctx.beginPath();
             for(let i=0; i<=width+100; i+=100) { let x=i+bgOffset; ctx.moveTo(x,0); ctx.lineTo(x,height); }
             for(let i=0; i<=height; i+=80) { ctx.moveTo(0,i); ctx.lineTo(width,i); } ctx.stroke();
+            
             ctx.fillStyle = "#fff"; for(let p of particles) { if(p.type === 'dust') { ctx.globalAlpha = Math.random(); ctx.fillRect(p.x, p.y, p.size, p.size); } } ctx.globalAlpha = 1;
         }
 
