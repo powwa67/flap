@@ -3,20 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SYSTEM BREACH PROTOCOL v2</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>SYSTEM FAILURE // HARDCORE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-pink: #ff00ff;
-            --neon-green: #0aff0a;
-            --bg-color: #050510;
-        }
-
         body {
             margin: 0;
-            background-color: var(--bg-color);
-            color: var(--neon-blue);
+            background-color: #000;
+            color: #f00;
             font-family: 'Orbitron', sans-serif;
             overflow: hidden;
             display: flex;
@@ -25,39 +18,27 @@
             height: 100vh;
             user-select: none;
             -webkit-user-select: none;
+            transition: filter 0.1s; /* Smooth glitch transition */
         }
 
-        /* CRT Scanline Effect Overlay */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 6px 100%;
-            pointer-events: none;
-            z-index: 100;
+        /* Glitch effect class */
+        .glitch-active {
+            filter: invert(1) hue-rotate(180deg);
         }
 
         #game-container {
             position: relative;
-            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
-            border: 2px solid #333;
-            background: #000;
+            border: 4px solid #f00;
+            box-shadow: 0 0 30px #f00;
+            background: #110000;
         }
 
-        canvas {
-            display: block;
-        }
+        canvas { display: block; }
 
-        /* UI Overlays */
         #ui-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
             display: flex;
             flex-direction: column;
@@ -67,146 +48,99 @@
         }
 
         .score-display {
-            font-size: 2.5rem;
+            font-size: 3rem;
             text-align: center;
-            text-shadow: 0 0 10px var(--neon-blue);
-            font-weight: 900;
-        }
-
-        .sub-text {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.5);
-            text-align: center;
-            margin-top: 5px;
-            letter-spacing: 2px;
+            text-shadow: 4px 4px 0px #000;
+            color: #fff;
+            -webkit-text-stroke: 1px #f00;
         }
 
         #start-message {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            animation: pulse 1.5s infinite;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 2px solid #f00;
         }
 
-        #start-message h2 {
-            font-size: 1.5rem;
-            margin: 0;
-            color: var(--neon-pink);
-            text-shadow: 0 0 10px var(--neon-pink);
-        }
-
-        /* The Reward Terminal */
+        /* Reward Modal */
         #terminal-modal {
             display: none;
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
             max-width: 450px;
-            background: rgba(0, 10, 20, 0.95);
-            border: 1px solid var(--neon-green);
+            background: #000;
+            border: 2px solid #0f0;
             padding: 2rem;
             z-index: 200;
-            box-shadow: 0 0 100px rgba(10, 255, 10, 0.2);
-            backdrop-filter: blur(5px);
             text-align: center;
-        }
-
-        .terminal-header {
-            color: var(--neon-green);
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-            text-shadow: 0 0 5px var(--neon-green);
+            box-shadow: 0 0 100px rgba(0, 255, 0, 0.5);
         }
 
         .key-box {
-            background: #001100;
-            color: #fff;
+            background: #111;
+            color: #0f0;
             font-family: monospace;
             padding: 15px;
-            border: 1px dashed var(--neon-green);
+            border: 1px dashed #0f0;
             margin: 20px 0;
             word-break: break-all;
             user-select: text;
             pointer-events: auto;
-            font-size: 1.1rem;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.95); }
-            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
-        }
-
-        .shake-screen {
-            animation: shake 0.5s;
         }
     </style>
 </head>
 <body>
 
-    <div class="scanlines"></div>
-
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         
         <div id="ui-layer">
-            <div>
-                <div class="score-display" id="scoreEl">0 / 20</div>
-                <div class="sub-text">SECURITY LAYERS BREACHED</div>
-            </div>
+            <div class="score-display" id="scoreEl">0 / 20</div>
             
             <div id="start-message">
-                <h2>TAP TO INITIATE</h2>
-                <div class="sub-text">[ SPACEBAR / CLICK ]</div>
+                <h2 style="margin:0; color:#f00">WARNING: UNSTABLE</h2>
+                <p style="color:#fff; margin-top:5px">TAP TO SURVIVE</p>
             </div>
         </div>
     </div>
 
     <div id="terminal-modal">
-        <div class="terminal-header">ACCESS GRANTED</div>
-        <p style="color: #ccc; font-size: 0.9rem;">ROOT PRIVILEGES CONFIRMED.</p>
+        <h2 style="color:#0f0; margin:0">SYSTEM STABILIZED</h2>
         <div class="key-box">
-            sk-newapi-REPLACE-THIS-WITH-YOUR-REAL-KEY
+            sk-newapi-REPLACE-THIS-WITH-YOUR-KEY
         </div>
-        <div class="sub-text" style="color: var(--neon-green)">SESSION SECURE</div>
+        <p style="color:#666">Do not distribute.</p>
     </div>
 
     <script>
+        // --- IMAGE CONFIGURATION ---
+        const birdImg = new Image();
+        
+        // PASTE YOUR IMAGE URL INSIDE THE QUOTES BELOW vvv
+        // Example: "https://i.imgur.com/YourImage.png"
+        // If you upload the file to GitHub, just put "bird.png"
+        birdImg.src = "https://imgur.com/a/ZtQ6mED"; 
+        // ^ (I put a default red ghost icon for now. Replace it!)
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreEl = document.getElementById('scoreEl');
         const startMsg = document.getElementById('start-message');
-        const container = document.getElementById('game-container');
         const terminal = document.getElementById('terminal-modal');
 
-        // --- GAME CONFIG (HARD MODE) ---
-        const WIN_SCORE = 20;  // THE GOAL
-        const GRAVITY = 0.25;
-        const JUMP = 4.5;
-        const SPEED = 2.5;
-        const GAP = 145; // Slight increase to make 20 score less frustrating
+        // --- HARDCORE SETTINGS ---
+        const WIN_SCORE = 20;
+        const GRAVITY = 0.35;    // Heavier gravity (falls faster)
+        const JUMP = 5.5;        // Snappier jump
+        const SPEED = 4.0;       // Much faster horizontal speed
+        const GAP = 140;         // Gap size
         
-        // Resize logic
+        // Resize
         let width = 360;
         let height = 600;
         if(window.innerWidth < 400) { width = window.innerWidth - 20; height = window.innerHeight - 100; }
@@ -216,68 +150,28 @@
         let frames = 0;
         let score = 0;
         let gameState = 'START';
-        let particles = [];
-
-        // Audio System
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
-
-        function playSound(type) {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            if (type === 'jump') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // Lower volume
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'score') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(1200, audioCtx.currentTime + 0.05);
-                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'die') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.3);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
-        }
-
+        
         // --- OBJECTS ---
         const bird = {
             x: 50,
             y: 200,
-            w: 20,
-            h: 20,
+            w: 30, // Slightly bigger for image
+            h: 30,
             speed: 0,
             draw: function() {
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = "#00f3ff";
-                ctx.fillStyle = "#00f3ff";
-                ctx.fillRect(this.x, this.y, this.w, this.h);
-                ctx.shadowBlur = 0;
-                
-                // Trail effect
-                if(frames % 5 === 0) {
-                    particles.push({x: this.x, y: this.y + 10, size: 4, life: 20});
+                // If image is loaded, use it. Otherwise use red square.
+                if (birdImg.complete && birdImg.naturalHeight !== 0) {
+                    ctx.drawImage(birdImg, this.x, this.y, this.w, this.h);
+                } else {
+                    ctx.fillStyle = "#f00";
+                    ctx.fillRect(this.x, this.y, this.w, this.h);
                 }
             },
             update: function() {
                 this.speed += GRAVITY;
                 this.y += this.speed;
+                // Rotation effect based on speed
+                // (Simplified for performance)
             }
         };
 
@@ -286,31 +180,28 @@
             draw: function() {
                 for(let i=0; i<this.data.length; i++) {
                     let p = this.data[i];
-                    ctx.strokeStyle = "#ff00ff";
-                    ctx.lineWidth = 2;
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = "#ff00ff";
                     
-                    ctx.strokeRect(p.x, 0, p.w, p.top);
-                    ctx.strokeRect(p.x, height - p.bottom, p.w, p.bottom);
-                    
-                    ctx.fillStyle = "rgba(255, 0, 255, 0.1)";
+                    // Danger Red Pipes
+                    ctx.fillStyle = "#800000"; // Dark Red
                     ctx.fillRect(p.x, 0, p.w, p.top);
                     ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
                     
-                    ctx.shadowBlur = 0;
+                    // Highlights
+                    ctx.fillStyle = "#ff0000";
+                    ctx.fillRect(p.x, p.top - 20, p.w, 20); // Top Cap
+                    ctx.fillRect(p.x, height - p.bottom, p.w, 20); // Bottom Cap
                 }
             },
             update: function() {
-                if(frames % 120 === 0) {
-                    // Smart Pipe Generation (Prevent impossible gaps)
-                    let minHeight = 50;
+                // Faster pipe spawning because SPEED is higher
+                if(frames % 90 === 0) {
+                    let minHeight = 40;
                     let maxHeight = height - GAP - minHeight;
                     let topH = Math.random() * (maxHeight - minHeight) + minHeight;
                     
                     this.data.push({
                         x: width,
-                        w: 50,
+                        w: 60, // Fatter pipes
                         top: topH,
                         bottom: height - GAP - topH
                     });
@@ -320,21 +211,23 @@
                     let p = this.data[i];
                     p.x -= SPEED;
 
-                    // Collision
+                    // Hitbox slightly forgiving (padding 2px)
                     if(
-                        bird.x < p.x + p.w &&
-                        bird.x + bird.w > p.x &&
-                        (bird.y < p.top || bird.y + bird.h > height - p.bottom)
+                        bird.x + 2 < p.x + p.w &&
+                        bird.x + bird.w - 2 > p.x &&
+                        (bird.y + 2 < p.top || bird.y + bird.h - 2 > height - p.bottom)
                     ) {
                         gameOver();
                     }
 
-                    // Score
                     if(p.x + p.w < bird.x && !p.passed) {
                         score++;
                         scoreEl.innerText = `${score} / ${WIN_SCORE}`;
                         p.passed = true;
-                        playSound('score');
+                        
+                        // DISTRACTION: Glitch screen on every point
+                        triggerGlitch();
+                        
                         if(score >= WIN_SCORE) gameWin();
                     }
 
@@ -343,56 +236,64 @@
             }
         };
 
+        function triggerGlitch() {
+            // Randomly invert colors for 100ms
+            if(Math.random() > 0.3) {
+                document.body.classList.add('glitch-active');
+                setTimeout(() => {
+                    document.body.classList.remove('glitch-active');
+                }, 150);
+            }
+        }
+
+        // Random Background flicker
         function drawBackground() {
-            ctx.strokeStyle = "rgba(0, 243, 255, 0.1)";
-            ctx.lineWidth = 1;
+            // Randomly change background color slightly
+            if (frames % 10 === 0) {
+                let r = Math.floor(Math.random() * 20);
+                ctx.fillStyle = `rgb(${r}, 0, 0)`; // Very dark pulsing red
+            } else {
+                ctx.fillStyle = "#110000";
+            }
+            ctx.fillRect(0,0,width,height);
             
-            let offset = frames * (SPEED/2) % 40;
+            // Grid lines
+            ctx.strokeStyle = "#300000";
+            let offset = frames * SPEED % 40;
             for(let x = -offset; x < width; x+=40) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
-            }
-            for(let y = 0; y < height; y+=40) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,height); ctx.stroke();
             }
         }
 
-        function drawParticles() {
-            for(let i=0; i<particles.length; i++) {
-                let p = particles[i];
-                ctx.fillStyle = `rgba(0, 243, 255, ${p.life/20})`;
-                ctx.fillRect(p.x, p.y, p.size, p.size);
-                p.x -= SPEED;
-                p.life--;
-            }
-            particles = particles.filter(p => p.life > 0);
-        }
-
-        // --- GAME LOGIC ---
+        // --- LOOP ---
         function loop() {
             if(gameState !== 'PLAYING') return;
 
-            ctx.fillStyle = "#050510";
-            ctx.fillRect(0,0,width,height);
+            // Random distraction: Screen Shake (rarely)
+            if (Math.random() > 0.995) {
+                canvas.style.transform = `translate(${Math.random()*4-2}px, ${Math.random()*4-2}px)`;
+            } else {
+                canvas.style.transform = "none";
+            }
 
             drawBackground();
             pipes.update();
             pipes.draw();
             bird.update();
             bird.draw();
-            drawParticles();
 
-            if(bird.y + bird.h >= height || bird.y < 0) {
-                gameOver();
-            }
+            if(bird.y + bird.h >= height || bird.y < 0) gameOver();
 
             frames++;
             requestAnimationFrame(loop);
+        }
+
+        function startGame() {
+            if(gameState === 'PLAYING') return;
+            gameState = 'PLAYING';
+            startMsg.style.display = 'none';
+            scoreEl.style.color = "#fff";
+            loop();
         }
 
         function reset() {
@@ -402,58 +303,44 @@
             score = 0;
             frames = 0;
             scoreEl.innerText = `0 / ${WIN_SCORE}`;
-            scoreEl.style.color = "var(--neon-blue)";
             gameState = 'START';
             startMsg.style.display = 'block';
-            
-            ctx.fillStyle = "#050510";
-            ctx.fillRect(0,0,width,height);
+            document.body.classList.remove('glitch-active');
             drawBackground();
             bird.draw();
         }
 
-        function startGame() {
-            if(gameState === 'PLAYING') return;
-            gameState = 'PLAYING';
-            startMsg.style.display = 'none';
-            playSound('jump');
-            loop();
-        }
-
         function gameOver() {
             gameState = 'END';
-            playSound('die');
-            scoreEl.style.color = "red";
-            container.classList.add('shake-screen');
-            setTimeout(() => container.classList.remove('shake-screen'), 500);
+            scoreEl.style.color = "#f00";
+            scoreEl.innerText = "FAIL";
             setTimeout(reset, 1000);
         }
 
         function gameWin() {
             gameState = 'WIN';
             terminal.style.display = 'block';
-            playSound('score');
         }
 
         function jump(e) {
             if (e.type === 'keydown' && e.code !== 'Space') return;
             e.preventDefault(); 
-            
             if(gameState === 'WIN') return;
-
-            if(gameState === 'START' || gameState === 'END') {
-                startGame();
-            }
+            if(gameState === 'START' || gameState === 'END') startGame();
             
             bird.speed = -JUMP;
-            playSound('jump');
         }
 
         window.addEventListener('keydown', jump);
         window.addEventListener('mousedown', jump);
         window.addEventListener('touchstart', jump, {passive: false});
 
-        reset();
+        // Initialize
+        birdImg.onload = function() {
+            reset();
+        };
+        // Fallback if image fails or takes long
+        setTimeout(reset, 500);
 
     </script>
 </body>
