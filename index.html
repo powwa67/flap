@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GEOMETRY GATE: HYPER</title>
-    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --gd-blue: #00ffff;
@@ -13,7 +13,7 @@
             --gd-yellow: #ffff00;
             --gd-green: #00ff00;
             --gd-red: #ff0000;
-        }
+            --gd-orange: #ff8800;}
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -25,68 +25,81 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none;-webkit-user-select: none;-webkit-tap-highlight-color: transparent;
         }
 
         #game-wrapper {
             position: relative;
-            border: 3px solid #fff;
+            border: 4px solid #0ff;
             border-radius: 12px;
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
             aspect-ratio: 9/16;
             max-height: 95vh;
             background: #000;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: all 0.5s;box-shadow: 0 0 40px rgba(0,255,255,0.4), inset 0 0 60px rgba(0,255,255,0.1);
         }
 
-        .glow-blue { 
-            box-shadow: 0 0 30px #0ff, 0 0 60px rgba(0,255,255,0.3), inset 0 0 30px rgba(0,255,255,0.1); border-color: #0ff;
-        }
-        .glow-red { 
-            box-shadow: 0 0 30px #f00, 0 0 60px rgba(255,0,0,0.4), inset 0 0 30px rgba(255,0,0,0.1); 
+        #game-wrapper.demon-mode {
             border-color: #f00;
+            box-shadow: 0 0 60px rgba(255,0,0,0.6), inset 0 0 80px rgba(255,0,0,0.15);
         }
-        .glow-rainbow {
+
+        #game-wrapper.rainbow-mode {
             animation: rainbow-border 2s linear infinite;
         }
+
         @keyframes rainbow-border {
-            0% { border-color: #ff0000; box-shadow: 0 0 40px #ff0000; }
-            16% { border-color: #ff8800; box-shadow: 0 0 40px #ff8800; }
-            33% { border-color: #ffff00; box-shadow: 0 0 40px #ffff00; }
-            50% { border-color: #00ff00; box-shadow: 0 0 40px #00ff00; }
-            66% { border-color: #0088ff; box-shadow: 0 0 40px #0088ff; }
-            83% { border-color: #8800ff; box-shadow: 0 0 40px #8800ff; }
-            100% { border-color: #ff0000; box-shadow: 0 0 40px #ff0000; }
+            0% { border-color: #ff0000; box-shadow: 0 0 50px #ff0000; }
+            17% { border-color: #ff8800; box-shadow: 0 0 50px #ff8800; }
+            33% { border-color: #ffff00; box-shadow: 0 0 50px #ffff00; }
+            50% { border-color: #00ff00; box-shadow: 0 0 50px #00ff00; }
+            67% { border-color: #0088ff; box-shadow: 0 0 50px #0088ff; }
+            83% { border-color: #aa00ff; box-shadow: 0 0 50px #aa00ff; }
+            100% { border-color: #ff0000; box-shadow: 0 0 50px #ff0000; }
         }
 
         .shake-small { animation: shake-s 0.1s; }
-        .shake-big { animation: shake-b 0.3s cubic-bezier(.36,.07,.19,.97) both; }
-        .shake-death { animation: shake-death 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        .flash-white { animation: flash-w 0.15s; }
-        .flash-red { animation: flash-r 0.2s; }
+        .shake-big { animation: shake-b 0.35s cubic-bezier(.36,.07,.19,.97) both; }
+        .shake-death { animation: shake-death 0.6s; }
+        .flash-white { animation: flash-w 0.1s; }
+        .flash-red { animation: flash-r 0.15s; }
 
-        @keyframes shake-s { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+        @keyframes shake-s { 
+            0%, 100% { transform: translateY(0); } 
+            50% { transform: translateY(4px); } 
+        }
         @keyframes shake-b { 
-            0%,100% { transform: translate(0,0) rotate(0); }
-            20% { transform: translate(-5px, 2px) rotate(-1deg); }
-            40% { transform: translate(5px, -2px) rotate(1deg); }
-            60% { transform: translate(-3px, 1px) rotate(-0.5deg); }
-            80% { transform: translate(3px, -1px) rotate(0.5deg); }}
+            0%, 100% { transform: translate(0,0) rotate(0deg); }
+            20% { transform: translate(-6px, 3px) rotate(-2deg); }
+            40% { transform: translate(6px, -3px) rotate(2deg); }
+            60% { transform: translate(-4px, 2px) rotate(-1deg); }
+            80% { transform: translate(4px, -2px) rotate(1deg); }}
         @keyframes shake-death { 
-            0%,100% { transform: translate(0,0); }
-            10% { transform: translate(-10px, -5px); }
-            20% { transform: translate(10px, 5px); }
-            30% { transform: translate(-8px, -3px); }
-            40% { transform: translate(8px, 3px); }
-            50% { transform: translate(-5px, -2px); }
-            60% { transform: translate(5px, 2px); }}
-        @keyframes flash-w { 0% { filter: brightness(3); } 100% { filter: brightness(1); } }
-        @keyframes flash-r { 0% { filter: brightness(1) sepia(1) saturate(10) hue-rotate(-20deg); } 100% { filter: brightness(1); } }
+            0%, 100% { transform: translate(0,0); filter: brightness(1); }
+            10% { transform: translate(-12px, -8px); filter: brightness(2); }
+            20% { transform: translate(12px, 8px); filter: brightness(0.5); }
+            30% { transform: translate(-10px, 6px); }
+            40% { transform: translate(10px, -6px); }
+            50% { transform: translate(-8px, 4px); }
+            60% { transform: translate(8px, -4px); }
+            70% { transform: translate(-4px, 2px); }
+            80% { transform: translate(4px, -2px); }}
+        @keyframes flash-w { 
+            0% { filter: brightness(3) saturate(0); } 
+            100% { filter: brightness(1) saturate(1); } 
+        }
+        @keyframes flash-r { 
+            0% { filter: brightness(1.5) sepia(1) saturate(5) hue-rotate(-10deg); } 
+            100% { filter: brightness(1); } 
+        }
 
-        canvas { display: block; width: 100%; height: 100%; }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+        }
 
         #ui-layer {
             position: absolute;
@@ -101,519 +114,591 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            gap: 12px;
+            padding: 10px 12px;
+            gap: 10px;
         }
 
         #lives-display {
-            color: #fff;
-            font-size: 1.1rem;
-            text-shadow: 0 0 10px currentColor;
-            background: rgba(0,0,0,0.7);
-            padding: 6px 14px;
+            font-size: 1rem;
+            text-shadow: 0 0 10px #f00;
+            background: rgba(0,0,0,0.8);
+            padding: 6px 10px;
             border-radius: 20px;
-            border: 2px solid #0ff;
+            border: 2px solid #ff4444;
             display: flex;
             align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
+            letter-spacing: -2px;
+            transition: all 0.2s;
         }
+
         #lives-display.hurt {
-            border-color: #f00;
-            color: #f00;animation: pulse-hurt 0.3s;
+            animation: hurt-pulse 0.3s;border-color: #fff;
         }
-        @keyframes pulse-hurt { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
+
+        @keyframes hurt-pulse { 
+            0%, 100% { transform: scale(1); background: rgba(0,0,0,0.8); } 
+            50% { transform: scale(1.15); background: rgba(255,0,0,0.5); } 
+        }
 
         #score-display {
             color: #fff;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-family: 'Orbitron', sans-serif;
-            text-shadow: 0 0 15px #0ff;
-            background: rgba(0,0,0,0.7);
-            padding: 6px 14px;
+            font-weight: 900;
+            text-shadow: 0 0 15px #0ff, 0 0 30px #0ff;
+            background: rgba(0,0,0,0.8);
+            padding: 6px 16px;
             border-radius: 20px;
             border: 2px solid #0ff;
-            min-width: 60px;
+            min-width: 70px;
             text-align: center;
+            transition: all 0.1s;
+        }
+
+        #score-display.pop {
+            animation: score-pop 0.2s;
+        }
+
+        @keyframes score-pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        #progress-container {
+            flex-grow: 1;
+            padding: 0 5px;
         }
 
         #progress-bar {
-            flex-grow: 1;
-            height: 20px;
-            background: rgba(0,0,0,0.7);
-            border: 2px solid #fff;
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;}
+            height: 16px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;}
 
         #progress-fill {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #00ffff, #00ff88, #88ff00, #ffff00);
-            background-size: 200% 100%;
-            animation: gradient-move 1s linear infinite;
-            transition: width 0.1s;
-            border-radius: 10px;
-            position: relative;
+            background: linear-gradient(90deg, #00ff88, #00ffff, #88ff00, #ffff00);
+            background-size: 300% 100%;
+            animation: gradient-scroll 2s linear infinite;
+            transition: width 0.15s ease-out;border-radius: 8px;position: relative;box-shadow: 0 0 10px currentColor;
         }
+
         #progress-fill::after {
             content: '';
             position: absolute;
-            right: 0; top: 0;
-            width: 30px; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6));}
-        @keyframes gradient-move { 0%{background-position:0% 0%;} 100%{background-position:200% 0%;} }
+            top: 0; right: 0;
+            width: 20px; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8));
+            border-radius: 0 8px 8px 0;}
+
+        #progress-fill.demon {
+            background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #ff0000);
+        }
+
+        @keyframes gradient-scroll { 
+            0% { background-position: 0% 50%; } 
+            100% { background-position: 300% 50%; } 
+        }
 
         #combo-display {
             position: absolute;
-            top: 80px; left: 50%;
+            top: 75px;
+            left: 50%;
             transform: translateX(-50%);
             font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
+            font-size: 1.8rem;
+            font-weight: 900;
             color: #fff;
-            text-shadow: 0 0 20px currentColor;
+            text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
             opacity: 0;
-            transition: all 0.2s;
-            pointer-events: none;}
-        #combo-display.show {
-            opacity: 1;
-            animation: combo-pop 0.3s ease-out;
+            pointer-events: none;
+            white-space: nowrap;
         }
-        @keyframes combo-pop { 0%{transform:translateX(-50%) scale(1.5);} 100%{transform:translateX(-50%) scale(1);} }
 
+        #combo-display.show {
+            animation: combo-pop 0.4s ease-out forwards;
+        }
+
+        @keyframes combo-pop { 
+            0% { opacity: 1; transform: translateX(-50%) scale(2); } 
+            100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-20px); } 
+        }
+
+        /* MAIN MENU */
         #main-menu {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
             width: 90%;
+            z-index: 20;
         }
 
-        h1#title {
+        #title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.8rem;
+            font-size: 2.4rem;
+            font-weight: 900;
             margin: 0;
-            line-height: 1.1;
-            background: linear-gradient(180deg, #fff0%, #0ff 50%, #b0f 100%);
+            line-height: 1.15;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #ffffff0%, #00ffff 40%, #00aaff 70%, #0066ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 0 20px rgba(0,255,255,0.8));
-            animation: title-pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(0,255,255,0.8)) drop-shadow(0 4px 0 #004466);
+            animation: title-float 3s ease-in-out infinite;
         }
-        @keyframes title-pulse {
-            0%,100% { filter: drop-shadow(0 0 20px rgba(0,255,255,0.8)); transform: scale(1); }
-            50% { filter: drop-shadow(0 0 40px rgba(189,0,255,0.8)); transform: scale(1.02); }
+
+        @keyframes title-float {
+            0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 20px rgba(0,255,255,0.8)); }
+            50% { transform: translateY(-5px) scale(1.02); filter: drop-shadow(0 0 40px rgba(0,255,255,1)); }
         }
-        h1#title.demon {
-            background: linear-gradient(180deg, #fff 0%, #f00 50%, #ff8800 100%);
+
+        #title.demon {
+            background: linear-gradient(180deg, #ffffff 0%, #ff4444 30%, #ff0000 60%, #880000 100%);
             -webkit-background-clip: text;
             background-clip: text;
-            animation: title-pulse-demon 1s ease-in-out infinite;
+            filter: drop-shadow(0 0 25px rgba(255,0,0,0.9)) drop-shadow(0 4px 0 #440000);
+            animation: title-demon 1.5s ease-in-out infinite;
         }
-        @keyframes title-pulse-demon {
-            0%,100% { filter: drop-shadow(0 0 20px rgba(255,0,0,0.8)); }
-            50% { filter: drop-shadow(0 0 40px rgba(255,136,0,1)); }
+
+        @keyframes title-demon {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(255,0,0,0.8)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 50px rgba(255,100,0,1)); transform: scale(1.03); }
         }
 
         #subtitle {
+            font-family: 'Orbitron', sans-serif;
             color: #888;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            letter-spacing: 3px;
-        }
-
-        #tap-prompt {
-            color: #ffff00;
-            margin-top: 30px;
-            font-size: 1.3rem;
-            animation: blink-prompt 0.6s ease-in-out infinite alternate;
-        }
-        @keyframes blink-prompt {
-            0% { opacity: 0.4; transform: scale(0.95); } 
-            100% { opacity: 1; transform: scale(1.05); } 
+            font-size: 0.75rem;
+            margin-top: 8px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
         }
 
         #difficulty-badge {
             display: inline-block;
-            margin-top: 15px;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            letter-spacing: 2px;
+            margin-top: 20px;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 3px;
         }
+
         #difficulty-badge.normal {
-            background: linear-gradient(135deg, #004444, #008888);
+            background: linear-gradient(135deg, #003333, #006666);
             border: 2px solid #0ff;
             color: #0ff;
-            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+            box-shadow: 0 0 20px rgba(0,255,255,0.4), inset 0 0 20px rgba(0,255,255,0.1);
         }
+
         #difficulty-badge.demon {
-            background: linear-gradient(135deg, #440000, #880000);
+            background: linear-gradient(135deg, #330000, #660000);
             border: 2px solid #f00;
             color: #f00;
-            box-shadow: 0 0 20px rgba(255,0,0,0.5);
-            animation: demon-badge0.5s ease-in-out infinite alternate;
+            box-shadow: 0 0 25px rgba(255,0,0,0.6);
+            animation: demon-badge-pulse 0.6s ease-in-out infinite alternate;
         }
-        @keyframes demon-badge { 0%{box-shadow:0 0 15px #f00;} 100%{box-shadow:0 0 30px #f00;} }
 
-        /* Modals */
+        @keyframes demon-badge-pulse { 
+            0% { box-shadow: 0 0 20px rgba(255,0,0,0.4); transform: scale(1); } 
+            100% { box-shadow: 0 0 40px rgba(255,0,0,0.8); transform: scale(1.02); } 
+        }
+
+        #tap-prompt {
+            color: #ffff00;
+            margin-top: 35px;
+            font-size: 1.2rem;
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 20px #ff0, 0 0 40px #ff0;
+            animation: tap-blink 0.7s ease-in-out infinite alternate;
+        }
+
+        @keyframes tap-blink {
+            0% { opacity: 0.5; transform: scale(0.95); text-shadow: 0 0 10px #ff0; }
+            100% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 30px #ff0, 0 0 60px #ff8800; }
+        }
+
+        #mode-info {
+            margin-top: 15px;
+            padding: 8px 15px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        #mode-info span {
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        #mode-info .value {
+            color: #0ff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+        }
+
+        #mode-info.demon .value {
+            color: #f00;}
+
+        /* MODALS */
         .modal {
             display: none;
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.97);
             z-index: 100;
             flex-direction: column;align-items: center;
             justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;animation: modal-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: auto;
+            padding: 20px;text-align: center;pointer-events: auto;
+            overflow-y: auto;
         }
+
+        .modal.show {
+            display: flex;
+            animation: modal-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
         @keyframes modal-in {
-            0% { opacity: 0; transform: scale(0.8); } 
-            100% { opacity: 1; transform: scale(1); } 
+            0% { opacity: 0; transform: scale(0.7) rotateX(20deg); }
+            100% { opacity: 1; transform: scale(1) rotateX(0deg); }
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+        }
+
+        .modal-title.success {
+            background: linear-gradient(180deg, #00ff00, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 25px rgba(0,255,0,0.8));
+            animation: success-glow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes success-glow {
+            0% { filter: drop-shadow(0 0 20px rgba(0,255,0,0.6)); }
+            100% { filter: drop-shadow(0 0 40px rgba(0,255,255,1)); }
+        }
+
+        .modal-title.godlike {
+            background: linear-gradient(180deg, #ffff00, #ff8800, #ff0000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(255,136,0,1));
+            animation: godlike-glow 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes godlike-glow {
+            0% { filter: drop-shadow(0 0 25px rgba(255,0,0,0.8)); transform: scale(1); }
+            100% { filter: drop-shadow(0 0 50px rgba(255,200,0,1)); transform: scale(1.03); }
+        }
+
+        .modal-title.failure {
+            color: #ff0000;
+            text-shadow: 0 0 30px #f00, 0 0 60px #f00;
+            animation: failure-shake 0.15s infinite;
+        }
+
+        @keyframes failure-shake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-4px) rotate(-1deg); }
+            75% { transform: translateX(4px) rotate(1deg); }
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-item {
+            text-align: center;}
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #0ff;
+            text-shadow: 0 0 15px currentColor;
+        }
+
+        .stat-value.demon {
+            color: #f00;}
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: #666;
+            letter-spacing: 2px;
+            margin-top: 3px;
+        }
+
+        .offer-card {
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 290px;
+            transition: all 0.3s;
+        }
+
+        .offer-card.safe:hover {
+            border-color: #0f0;
+            box-shadow: 0 0 30px rgba(0,255,0,0.2);
+        }
+
+        .offer-card.danger {
+            background: linear-gradient(180deg, rgba(50,0,0,0.5), rgba(30,0,0,0.8));
+            border-color: rgba(255,0,0,0.4);
+            box-shadow: 0 0 40px rgba(255,0,0,0.2);
+        }
+
+        .offer-card.danger:hover {
+            border-color: #f00;
+            box-shadow: 0 0 60px rgba(255,0,0,0.4);
+        }
+
+        .reward-label {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .reward-label.safe {
+            background: linear-gradient(135deg, #003300, #006600);
+            color: #0f0;
+            border: 1px solid #0f0;
+        }
+
+        .reward-label.risky {
+            background: linear-gradient(135deg, #330000, #660000);
+            color: #f00;
+            border: 1px solid #f00;
+            animation: risky-pulse 0.5s infinite alternate;
+        }
+
+        @keyframes risky-pulse { 
+            0% { opacity: 0.8; } 
+            100% { opacity: 1; box-shadow: 0 0 15px rgba(255,0,0,0.5); } 
         }
 
         .btn {
-            background: linear-gradient(180deg, #00ff88, #00aa44);
+            display: inline-block;
+            background: linear-gradient(180deg, #00ff88, #00cc66, #009944);
             border: none;
             border-radius: 30px;
-            padding: 16px 32px;
+            padding: 14px 28px;
             color: white;
             font-family: 'Russo One', sans-serif;
-            font-size: 1.1rem;
-            margin: 8px 0;
+            font-size: 1rem;
             cursor: pointer;
             width: 100%;
-            max-width: 280px;
-            box-shadow: 0 6px 0 #006622, 0 0 20px rgba(0,255,136,0.3);
+            max-width: 260px;
+            box-shadow: 0 5px 0 #006633, 0 0 25px rgba(0,255,136,0.4);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             transition: all 0.1s;
             position: relative;
-            overflow: hidden;
-        }
+            overflow: hidden;text-decoration: none;}
+
         .btn::before {
             content: '';
             position: absolute;
             top: 0; left: -100%;
             width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
             transition: left 0.5s;
         }
-        .btn:hover::before { left: 100%; }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
         .btn:active {
-            transform: translateY(4px); 
-            box-shadow: 0 2px 0 #006622; 
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #006633, 0 0 15px rgba(0,255,136,0.3);
         }
 
         .btn-demon {
-            background: linear-gradient(180deg, #ff4444, #aa0000);
-            box-shadow: 0 6px 0 #660000, 0 0 30px rgba(255,0,0,0.5);
-            animation: btn-demon-pulse 0.8s ease-in-out infinite alternate;
+            background: linear-gradient(180deg, #ff5555, #dd2222, #aa0000);
+            box-shadow: 0 5px 0 #660000, 0 0 35px rgba(255,0,0,0.5);
+            animation: btn-demon-glow 0.8s ease-in-out infinite alternate;
         }
-        @keyframes btn-demon-pulse { 
-            0% { box-shadow: 0 6px 0 #660000, 0 0 20px rgba(255,0,0,0.4); } 
-            100% { box-shadow: 0 6px 0 #660000, 0 0 40px rgba(255,0,0,0.8); } 
+
+        @keyframes btn-demon-glow { 
+            0% { box-shadow: 0 5px 0 #660000, 0 0 25px rgba(255,0,0,0.4); } 
+            100% { box-shadow: 0 5px 0 #660000, 0 0 50px rgba(255,0,0,0.8); } 
         }
 
         .btn-copy {
-            background: linear-gradient(180deg, #6666ff, #4444aa);
-            box-shadow: 0 6px 0 #222266, 0 0 20px rgba(100,100,255,0.3);}
+            background: linear-gradient(180deg, #7777ff, #5555dd, #3333aa);
+            box-shadow: 0 5px 0 #222266, 0 0 25px rgba(100,100,255,0.4);}
 
+        .btn-muted {
+            background: linear-gradient(180deg, #555, #333, #222);
+            box-shadow: 0 5px 0 #111, 0 0 10px rgba(255,255,255,0.1);
+        }
+
+        /* KEY DISPLAY */
         .key-container {
-            background: linear-gradient(135deg, #0a0a1a, #1a1a3a);
+            background: linear-gradient(135deg, #080818, #101030);
             border: 3px solid;
-            border-image: linear-gradient(90deg, #0ff, #b0f, #0ff) 1;
+            border-image: linear-gradient(90deg, #0ff, #00ff88, #0ff) 1;
             padding: 20px;
             margin: 20px 0;
-            position: relative;
             width: 100%;
-            max-width: 320px;
+            max-width: 310px;
+            position: relative;
+            animation: key-glow 2s ease-in-out infinite alternate;
         }
+
+        @keyframes key-glow {
+            0% { box-shadow: 0 0 20px rgba(0,255,255,0.3); }
+            100% { box-shadow: 0 0 40px rgba(0,255,136,0.5); }
+        }
+
         .key-container::before {
-            content: '🔑 API KEY';
+            content: '🔑 YOUR API KEY';
             position: absolute;
-            top: -12px; left: 20px;
+            top: -12px; left: 50%;
+            transform: translateX(-50%);
             background: #000;
-            padding: 0 10px;
+            padding: 2px 15px;
             color: #0ff;
-            font-size: 0.8rem;
-            letter-spacing: 2px;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            white-space: nowrap;
         }
+
         .key-container.demon {
             border-image: linear-gradient(90deg, #f00, #ff8800, #f00) 1;
+            animation: key-glow-demon 1.5s ease-in-out infinite alternate;
         }
+
+        @keyframes key-glow-demon {
+            0% { box-shadow: 0 0 25px rgba(255,0,0,0.4); }
+            100% { box-shadow: 0 0 50px rgba(255,136,0,0.6); }
+        }
+
         .key-container.demon::before {
-            color: #f00;
+            color: #ff8800;
+            content: '👑 PREMIUM KEY';
         }
 
         .key-text {
             font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            color: #0f0;
+            font-size: 0.8rem;
+            color: #00ff88;
             word-break: break-all;
-            padding: 10px;
-            background: rgba(0,255,0,0.1);
-            border-radius: 5px;
+            padding: 12px;
+            background: rgba(0,255,0,0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(0,255,0,0.2);
             margin-bottom: 15px;
             text-shadow: 0 0 10px rgba(0,255,0,0.5);
+            line-height: 1.5;
         }
 
-        .copied-toast {
-            position: fixed;
+        .key-text.demon {
+            color: #ff8800;
+            background: rgba(255,100,0,0.1);
+            border-color: rgba(255,100,0,0.3);
+            text-shadow: 0 0 15px rgba(255,100,0,0.5);
+        }
+
+        /* TOAST */
+        #copied-toast {
+            position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: #00ff00;
+            background: linear-gradient(135deg, #00ff00, #00cc00);
             color: #000;
-            padding: 15px 30px;
-            border-radius: 10px;
+            padding: 15px 35px;
+            border-radius: 15px;
             font-weight: bold;
+            font-size: 1.2rem;
             z-index: 9999;
+            box-shadow: 0 0 40px rgba(0,255,0,0.8);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .copied-toast.show {
-            transform: translate(-50%, -50%) scale(1);
-        }
 
-        .modal-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        .modal-title.cleared {
-            background: linear-gradient(180deg, #0f0, #0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 20px rgba(0,255,0,0.8));
-        }
-        .modal-title.godlike {
-            background: linear-gradient(180deg, #f00, #ff8800, #ff0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 30px rgba(255,0,0,1));
-            animation: godlike-text0.5s ease-in-out infinite alternate;
-        }
-        @keyframes godlike-text {
-            0% { filter: drop-shadow(0 0 20px rgba(255,0,0,0.8)); }
-            100% { filter: drop-shadow(0 0 40px rgba(255,136,0,1)); }
-        }
-        .modal-title.failure {
-            color: #f00;
-            text-shadow: 0 0 30px #f00;
-            animation: failure-shake 0.1s infinite;
-        }
-        @keyframes failure-shake {
-            0%,100% { transform: translateX(0); }
-            25% { transform: translateX(-3px); }
-            75% { transform: translateX(3px); }
-        }
+        #copied-toast.show {
+            transform: translate(-50%, -50%) scale(1);}
 
-        .offer-card {
-            background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 20px;
-            margin: 10px 0;
-            width: 100%;
-            max-width: 300px;
-            transition: all 0.3s;
-        }
-        .offer-card:hover {
-            border-color: rgba(255,255,255,0.5);
-            background: rgba(255,255,255,0.08);
-        }
-        .offer-card.danger {
-            border-color: rgba(255,0,0,0.5);
-            background: rgba(50,0,0,0.5);
-            box-shadow: 0 0 30px rgba(255,0,0,0.2);
-        }
-        .offer-card.danger:hover {
-            border-color: #f00;
-            box-shadow: 0 0 50px rgba(255,0,0,0.4);
-        }
-
-        .reward-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 15px;
+        /* Divider */
+        .divider {
+            color: #444;
             font-size: 0.8rem;
-            margin-bottom: 10px;
+            margin: 5px 0;display: flex;
+            align-items: center;
+            gap: 10px;width: 100%;
+            max-width: 280px;
         }
-        .reward-badge.safe {
-            background: linear-gradient(135deg, #004400, #008800);
-            color: #0f0;
-            border: 1px solid #0f0;
-        }
-        .reward-badge.risky {
-            background: linear-gradient(135deg, #440000, #880000);
-            color: #f00;
-            border: 1px solid #f00;animation: risky-pulse 0.5s infinite alternate;
-        }
-        @keyframes risky-pulse { 0%{opacity:0.7;} 100%{opacity:1;} }
 
-        .stats-row {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 15px 0;}
-        .stat-item {
-            text-align: center;
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #333, transparent);}
+
+        /* Particle canvas overlay for menu */
+        #menu-particles {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5;
         }
-        .stat-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            color: #0ff;}
-        .stat-label {
-            font-size: 0.7rem;
-            color: #888;
-            letter-spacing: 1px;
-        }</style>
+    </style>
 </head>
-<body><div id="game-wrapper" class="glow-blue">
-        <canvas id="gameCanvas"></canvas>
-        
-        <div id="ui-layer">
-            <div id="top-bar">
-                <div id="lives-display">
-                    <span id="hearts">♥♥♥♥♥♥♥♥♥♥</span>
-                </div>
-                <div id="score-display">0</div>
+<body>
+
+<div id="game-wrapper">
+    <canvas id="gameCanvas"></canvas>
+    <canvas id="menu-particles"></canvas>
+    
+    <div id="ui-layer">
+        <div id="top-bar">
+            <div id="lives-display">
+                <span id="hearts">♥♥♥♥♥♥♥♥♥♥</span>
+            </div>
+            <div id="score-display">0</div>
+            <div id="progress-container">
                 <div id="progress-bar">
                     <div id="progress-fill"></div>
-                </div>
-            </div>
-
-            <div id="combo-display"></div>
-
-            <div id="main-menu">
-                <h1 id="title">GEOMETRY<br>GATE</h1>
-                <div id="subtitle">HYPER EDITION</div>
-                <div id="difficulty-badge" class="normal">★ NORMAL MODE★</div><div id="tap-prompt">⚡ TAP TO PLAY⚡</div>
-            </div>
-        </div>
-
-        <!-- OFFER MODAL -->
-        <div id="offer-modal" class="modal">
-            <h2 class="modal-title cleared">★ CLEARED★</h2>
-            <div class="stats-row">
-                <div class="stat-item">
-                    <div class="stat-value" id="final-score">30</div>
-                    <div class="stat-label">SCORE</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="final-lives">♥10</div>
-                    <div class="stat-label">LIVES</div>
                 </div></div>
-
-            <div class="offer-card">
-                <div class="reward-badge safe">✓ SAFE CHOICE</div>
-                <p style="color:#fff; margin:10px 0; font-size:1.1rem;">🎁 1-DAY ACCESS KEY</p>
-                <button class="btn" onclick="claimStandard()">CLAIM REWARD</button>
-            </div>
-
-            <div style="color:#666; font-size:0.9rem; margin:5px 0;">— OR RISK IT ALL —</div>
-
-            <div class="offer-card danger">
-                <div class="reward-badge risky">⚠ DEMON MODE</div>
-                <p style="color:#ff4444; margin:5px 0; font-size:1.3rem; font-weight:bold;">🔥 7-DAY KEY🔥</p>
-                <p style="color:#ffaaaa; font-size:0.75rem; margin:5px 0;">Target: 50 • Speed: 1.5x</p>
-                <p style="color:#ff6666; font-size:0.7rem; font-style:italic; margin-bottom:10px;">"Death = Full Reset"</p><button class="btn btn-demon" onclick="startDemon()">ENTER HELL</button>
-            </div>
         </div>
 
-        <!-- PERMADEATH MODAL -->
-        <div id="perma-death-modal" class="modal">
-            <h1 class="modal-title failure">💀 FAILURE💀</h1>
-            <p style="color:#888; font-size:1.1rem; margin:20px 0;">All lives depleted</p>
-            <p style="color:#f00; font-size:0.9rem;">System requires full reset...</p>
-            <button class="btn" style="background:linear-gradient(180deg,#444,#222); box-shadow:0 6px 0 #111;" onclick="fullReset()">↻ RESTART</button>
-        </div>
+        <div id="combo-display"></div>
 
-        <!-- STANDARD WIN -->
-        <div id="win-std" class="modal">
-            <h1 class="modal-title cleared">🎉 UNLOCKED 🎉</h1>
-            <p style="color:#0ff; margin:10px 0;">1-Day Access Granted</p>
-            
-            <div class="key-container">
-                <div class="key-text" id="std-key">sk-newapi-STANDARD-KEY-12345</div>
-                <button class="btn btn-copy" onclick="copyKey('std-key')">📋 COPY KEY</button>
+        <div id="main-menu">
+            <h1 id="title">GEOMETRY<br>GATE</h1>
+            <div id="subtitle">HYPER EDITION</div>
+            <div id="difficulty-badge" class="normal">★ NORMAL ★</div>
+            <div id="mode-info">
+                <span>TARGET: </span><span class="value" id="target-display">30</span>
+                <span> • LIVES: </span><span class="value" id="lives-info">10</span>
             </div>
-            
-            <p style="color:#666; font-size:0.8rem;">Thanks for playing!</p>
-        </div>
+            <div id="tap-prompt">⚡ TAP TO START ⚡</div>
+        </div></div>
 
-        <!-- DEMON WIN -->
-        <div id="win-demon" class="modal">
-            <h1 class="modal-title godlike">👑 GODLIKE 👑</h1>
-            <p style="color:#ff8800; margin:10px 0; font-size:1.2rem;">You conquered the impossible!</p>
-            
-            <div class="key-container demon">
-                <div class="key-text" id="demon-key" style="color:#f00;">sk-newapi-PREMIUM-7DAY-99999</div>
-                <button class="btn btn-demon" onclick="copyKey('demon-key')">📋 COPY PREMIUM KEY</button>
-            </div>
-            
-            <p style="color:#888; font-size:0.8rem;">You are among the elite few.</p>
-        </div>
-
-        <!-- COPIED TOAST -->
-        <div id="copied-toast" class="copied-toast">✓ COPIED!</div>
-    </div>
-
-    <script>
-        // ============ CORE SETUP ============
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const wrapper = document.getElementById('game-wrapper');
-        // UI Elements
-        const titleEl = document.getElementById('title');
-        const subtitleEl = document.getElementById('subtitle');
-        const heartsEl = document.getElementById('hearts');
-        const scoreEl = document.getElementById('score-display');
-        const progressFill = document.getElementById('progress-fill');
-        const comboEl = document.getElementById('combo-display');
-        const diffBadge = document.getElementById('difficulty-badge');
-        const mainMenu = document.getElementById('main-menu');
-        // Modals
-        const offerModal = document.getElementById('offer-modal');
-        const permaDeathModal = document.getElementById('perma-death-modal');
-        const winStdModal = document.getElementById('win-std');
-        const winDemonModal = document.getElementById('win-demon');
-        const copiedToast = document.getElementById('copied-toast');
-
-        // ============ GAME CONFIG ============
-        const CONFIG = {
-            NORMAL: {
-                lives: 10,
-                target: 30,
-                speed: 5.5,
-                gravity: 0.48,
-                jump: 9,
-                gap: 165,
-                spawnRate: 90
-            },
-            DEMON: {
-                lives: 10, // Carries over
-                target: 50,
-                speed: 7.5,
-                gravity: 0.52,
-                jump: 9.5,
-                gap: 140,
-                spawnRate: 70
-            }
-        };
-
-        let MODE = 'NORMAL';
-        let lives, target, speed, gravity, jump, gap, spawnRate;
-        function loadConfig(mode) {
-            const c = CONFIG[mode];
-            if(mode === 'NORMAL') lives = c.lives;
-            target = c.target;
-            speed = c.speed;
-            gravity = c.gravity;
-            jump = c.jump;
-            gap = c.gap;
-            spawnRate =
+    <!--
