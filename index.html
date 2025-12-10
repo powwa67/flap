@@ -42,7 +42,7 @@
             transition: opacity 0.5s;
             pointer-events: none;
             z-index: 5;
-            display: none; /* Hidden by default */
+            display: none; 
         }
 
         .shake-small { animation: shake-s 0.1s; }
@@ -128,7 +128,7 @@
             display: none;
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); /* Slightly transparent to see GIF */
+            background: rgba(0,0,0,0.85);
             z-index: 100;
             flex-direction: column;
             align-items: center;
@@ -139,6 +139,12 @@
             animation: fadeIn 0.3s;
             pointer-events: auto;
             backdrop-filter: blur(5px);
+        }
+
+        /* Specific style for Win Modal to show GIF clearly */
+        #win-modal {
+            background: rgba(0,0,0,0.3); /* Low opacity */
+            backdrop-filter: none; /* NO BLUR */
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
@@ -206,13 +212,14 @@
         }
 
         .continue-link {
-            color: #aaa;
+            color: #fff;
             text-decoration: underline;
             margin-top: 15px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            text-shadow: 0 0 10px #000;
         }
-        .continue-link:hover { color: #fff; }
+        .continue-link:hover { color: #0ff; }
 
         #flash-overlay {
             position: absolute;
@@ -257,7 +264,7 @@
         </div>
 
         <div id="win-modal" class="modal">
-            <h1 style="color:#00ffff; font-size:3rem;">ACCESS GRANTED</h1>
+            <h1 style="color:#00ffff; font-size:3rem; text-shadow: 0 0 20px #00ffff;">ACCESS GRANTED</h1>
             <div class="key-container">
                 <div class="key-label">DAILY API KEY</div>
                 <div id="key-text" class="key-box">sk-newapi-DAILY-KEY-12345</div>
@@ -339,7 +346,7 @@
                 notes.forEach((n, i) => playTone(n, 'triangle', 0.4, 0.1, i*0.1));
             },
             secret: () => {
-                let notes = [261, 329, 392, 523, 1046]; // Major arpeggio
+                let notes = [261, 329, 392, 523, 1046]; 
                 notes.forEach((n, i) => playTone(n, 'sawtooth', 0.6, 0.2, i*0.15));
             },
             explode: () => {
@@ -368,7 +375,7 @@
         let frames = 0;
         let score = 0;
         let gameState = 'START';
-        let isEndless = false; // Flag for Easter Egg mode
+        let isEndless = false; 
         let globalHue = 0; 
         let bgOffset = 0;  
         
@@ -420,7 +427,6 @@
             let limit = isEndless ? SECRET_SCORE : TARGET_SCORE;
             let pct = Math.min(100, (score / limit) * 100);
             progressFill.style.width = pct + "%";
-            // Turn purple if endless
             if(isEndless) progressFill.style.background = "linear-gradient(90deg, #bd00ff, #fff)";
             else progressFill.style.background = "linear-gradient(90deg, #00ffff, #bd00ff)";
         }
@@ -482,10 +488,8 @@
                     p.x -= SPEED;
                     p.top += p.moveY; if(p.top<30 || p.top>height-GAP-30) p.moveY *= -1;
 
-                    // Collision
                     let pad=8; if(player.x+pad < p.x+p.w && player.x+player.size-pad > p.x && (player.y+pad < p.top || player.y+player.size-pad > height-p.bottom)) die();
 
-                    // Score
                     if(p.x+p.w < player.x && !p.passed) {
                         score++; p.passed = true; updateProgress(); SFX.score(); triggerShake();
                         shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
@@ -494,7 +498,6 @@
                             floatTexts.push({text: words[Math.floor(Math.random()*words.length)], x: player.x, y: player.y-40, life: 1.0, vy: -2});
                         }
                         
-                        // WIN LOGIC
                         if(!isEndless && score >= TARGET_SCORE) winGame();
                         if(isEndless && score >= SECRET_SCORE) secretWin();
                     }
@@ -522,7 +525,6 @@
             
             gameState = 'DIE_ANIM';
             
-            // Show Fail GIF
             bgFail.style.display = 'block';
             setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
 
@@ -532,12 +534,11 @@
         }
 
         function winGame() {
-            gameState = 'WIN_PAUSE'; // Pause physics
+            gameState = 'WIN_PAUSE'; 
             MUSIC.pause();
             SFX.win();
             flashScreen();
             
-            // Show Win GIF
             bgWin.style.display = 'block';
             setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
 
@@ -555,14 +556,19 @@
         window.continuePlaying = function() {
             winModal.style.display = 'none';
             isEndless = true;
+            
+            // FIX: Reset physics safely
+            player.y = height/2; 
+            player.velocity = 0; 
+            player.rotation = 0;
+            obstacles.list = []; // Clear immediate threats
+
             gameState = 'PLAY';
             MUSIC.resume();
             
-            // Hide Win GIF smoothly
             bgWin.style.opacity = '0';
             setTimeout(() => { bgWin.style.display = 'none'; }, 500);
 
-            // Change progress bar color to purple to indicate mode switch
             updateProgress();
         };
 
@@ -570,7 +576,6 @@
             deathModal.style.display = 'none';
             secretModal.style.display = 'none';
             
-            // Reset GIFs
             bgFail.style.opacity = '0';
             bgWin.style.opacity = '0';
             setTimeout(() => { 
