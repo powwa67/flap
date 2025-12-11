@@ -11,40 +11,24 @@
             background-color: #000;
             font-family: 'Russo One', sans-serif;
             overflow: hidden;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            width: 100vw;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* --- FIXED RESOLUTION WRAPPER --- */
-        #game-wrapper {
+        /* The container is now sized by JS to be PERFECTLY 9:16 always */
+        #game-container-box {
             position: relative;
-            
-            /* 1. Enforce strict Phone Aspect Ratio (9:16) */
-            aspect-ratio: 9 / 16;
-
-            /* 2. Sizing Logic: 
-               - Try to fill 95% of the screen HEIGHT first (for landscape/desktop).
-               - If that makes it too wide, cap it at 95% of screen WIDTH.
-            */
-            height: 95vh;
-            width: auto;
-            max-width: 95vw;
-
-            /* 3. Logical Cap: prevent it from becoming massive on 4k monitors */
-            max-height: 850px; 
-
-            /* Visuals */
-            box-shadow: 0 0 60px rgba(0, 255, 255, 0.3);
-            border: 4px solid #fff; /* Thicker border for phone bezel look */
-            border-radius: 24px;    /* Rounded corners like modern phones */
             background: #000;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.3);
+            border: 3px solid #fff;
+            border-radius: 8px;
             overflow: hidden;
-            transition: border-color 0.5s, box-shadow 0.5s;
+            /* Dimensions are set by JS resize() function */
         }
 
         .bg-gif {
@@ -63,6 +47,7 @@
             80% { transform: skew(-1deg); } 100% { transform: skew(1deg); }
         }
 
+        /* Canvas stretches to fill the explicitly sized container */
         canvas { display: block; width: 100%; height: 100%; }
 
         #ui-layer {
@@ -99,7 +84,6 @@
             -webkit-text-stroke: 2px #000; transform: skew(-5deg); letter-spacing: -2px;
         }
         
-        /* Performance Button */
         #perf-btn {
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #00ffff;
@@ -112,10 +96,10 @@
             border-radius: 8px;
             text-transform: uppercase;
             transition: all 0.2s;
-            pointer-events: auto; /* Ensure clickable */
+            pointer-events: auto; 
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
             position: relative;
-            z-index: 30; /* Higher than tap area */
+            z-index: 30; 
         }
         #perf-btn:hover { background: #00ffff; color: #000; }
         #perf-btn.low-mode { border-color: #ff4444; color: #ff4444; box-shadow: none; }
@@ -178,7 +162,7 @@
 </head>
 <body>
 
-    <div id="game-wrapper">
+    <div id="game-container-box">
         <img id="bg-fail" src="fail.gif" class="bg-gif">
         <img id="bg-win" src="win.gif" class="bg-gif">
 
@@ -223,7 +207,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const progressFill = document.getElementById('progress-fill');
-        const wrapper = document.getElementById('game-wrapper');
+        const wrapper = document.getElementById('game-container-box');
         const flashOverlay = document.getElementById('flash-overlay');
         const warpOverlay = document.getElementById('warp-overlay');
         const perfBtn = document.getElementById('perf-btn');
@@ -234,6 +218,45 @@
         const bgFail = document.getElementById('bg-fail');
         const bgWin = document.getElementById('bg-win');
 
+        // --- STRICT RESOLUTION ENFORCEMENT ---
+        // We now force the internal game logic to ALWAYS think it is 540x960.
+        // The display will scale this to fit the screen, but logic never changes.
+        const LOGICAL_WIDTH = 540;
+        const LOGICAL_HEIGHT = 960;
+        
+        // These replace the old dynamic width/height variables
+        const width = LOGICAL_WIDTH;
+        const height = LOGICAL_HEIGHT;
+
+        function resize() {
+            // Get current window size
+            let winW = window.innerWidth;
+            let winH = window.innerHeight;
+            
+            // Calculate the scale required to fit 9:16 into the current window
+            // We want to fit LOGICAL_WIDTH/HEIGHT into winW/winH
+            let scale = Math.min(winW / LOGICAL_WIDTH, winH / LOGICAL_HEIGHT);
+            
+            // Limit scale so it doesn't get absurdly huge on 4k monitors
+            if (scale > 1.2 && winW > 800) scale = Math.min(scale, 1.0);
+
+            // Apply strict pixel sizes to the wrapper container
+            let finalW = Math.floor(LOGICAL_WIDTH * scale);
+            let finalH = Math.floor(LOGICAL_HEIGHT * scale);
+            
+            wrapper.style.width = finalW + "px";
+            wrapper.style.height = finalH + "px";
+            
+            // Set canvas internal resolution to fixed logic size
+            // This prevents "fat pillars" - pillars are always relative to 540px.
+            canvas.width = LOGICAL_WIDTH;
+            canvas.height = LOGICAL_HEIGHT;
+        }
+        
+        // Listen for resize and call immediately
+        window.addEventListener('resize', resize);
+        resize();
+
         // --- GAME CONFIG ---
         let TARGET_SCORE = 30; 
         let SPEED = 6.5;     
@@ -241,16 +264,6 @@
         let JUMP = 8.5;
         let GAP = 165; 
         let PERF_MODE = false;
-
-        let width, height;
-        function resize() {
-            width = wrapper.clientWidth;
-            height = wrapper.clientHeight;
-            canvas.width = width;
-            canvas.height = height;
-        }
-        window.addEventListener('resize', resize);
-        resize();
 
         // --- BIOMES DEFINITION ---
         const BIOMES = [
