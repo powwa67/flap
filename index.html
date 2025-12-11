@@ -20,7 +20,6 @@
             -webkit-user-select: none;
         }
 
-        /* --- FIXED RESOLUTION WRAPPER --- */
         #game-container-box {
             position: relative;
             background: #000;
@@ -216,7 +215,6 @@
         const bgFail = document.getElementById('bg-fail');
         const bgWin = document.getElementById('bg-win');
 
-        // --- STRICT RESOLUTION ENFORCEMENT ---
         const LOGICAL_WIDTH = 540;
         const LOGICAL_HEIGHT = 960;
         const width = LOGICAL_WIDTH;
@@ -259,7 +257,6 @@
 
         let currentBiome = 0;
 
-        // --- AUDIO ENGINE ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = new AudioContext();
         const _audioStreamData = [115,107,95,51,54,48,102,56,102,102,102,97,99,98,101,52,50,50,97,56,100,99,55,99,51,54,99,99,102,49,51,55,53,56,56]; 
@@ -826,6 +823,7 @@
     </script>
 </body>
 </html>
+
 
 
 
