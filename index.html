@@ -497,52 +497,74 @@
         const obstacles = {
             list: [],
             
-            // --- "UNCHAINED RANDOMNESS" UPDATE LOGIC ---
+            // --- "ANOMALY" UPDATE LOGIC ---
             update: function() {
                 // SPAWN LOGIC
                 if(frames % 55 === 0) {
                     let minH = 60; 
                     let maxH = height - GAP - minH;
                     
-                    // Get last position
                     let prevTop = (this.list.length > 0) ? this.list[this.list.length-1].top : (height - GAP) / 2;
                     
-                    // 1. Determine Direction (Pure Chaos)
-                    // Default is 50/50 random chance.
+                    // 1. Standard Randomness
                     let direction = Math.random() < 0.5 ? 1 : -1;
-
-                    // 2. Wall Bounce (The only safety net)
-                    // If we are touching the roof, FORCE down.
                     if (prevTop < minH + 50) direction = 1;
-                    // If we are touching the floor, FORCE up.
                     else if (prevTop > maxH - 50) direction = -1;
 
-                    // 3. Calculate Step Size (Harder)
-                    // minStep = 60 (Prevents "flat" boring levels)
-                    // maxStep = 240 (Allows MASSIVE jumps across the screen)
                     let minStep = 60;
-                    let maxStep = 240;
+                    let maxStep = 220;
                     let step = Math.floor(Math.random() * (maxStep - minStep + 1)) + minStep;
-                    
                     let topH = prevTop + (step * direction);
 
-                    // 4. Hard Clamps (Keep it physically on screen)
-                    // If the random jump pushes it off-screen, we clamp it back.
+                    // Clamp
                     if(topH < minH) topH = minH + (Math.random() * 30);
                     if(topH > maxH) topH = maxH - (Math.random() * 30);
                     
+                    // --- THE SURPRISE ELEMENT ---
+                    // 30% Chance to spawn a "Moving Target" (Anomaly)
+                    let isAnomaly = Math.random() < 0.3;
+                    
+                    // Anomaly speed: Randomly slow or fast vertical movement
+                    let anomalySpeed = isAnomaly ? (Math.random() * 3 + 2) : 0; 
+                    let anomalyDir = Math.random() < 0.5 ? 1 : -1;
+
                     // -----------------------
 
                     let moveY = (Math.random()-0.5)*1.5; 
-                    this.list.push({x: width, w: 55, top: topH, bottom: height-GAP-topH, passed: false, moveY: moveY});
+                    this.list.push({
+                        x: width, 
+                        w: 55, 
+                        top: topH, 
+                        bottom: height-GAP-topH, 
+                        passed: false, 
+                        moveY: moveY,
+                        isAnomaly: isAnomaly,     // Is this a trap?
+                        anomalySpeed: anomalySpeed * anomalyDir, // How fast it moves
+                        anomalyOffset: 0          // Tracker
+                    });
                 }
 
                 // MOVEMENT & COLLISION
                 for(let p of this.list) {
                     p.x -= SPEED;
+
+                    // 1. STANDARD FLOAT
                     p.top += p.moveY; 
                     if(p.top < 30 || p.top > height - GAP - 30) p.moveY *= -1;
 
+                    // 2. ANOMALY MOVEMENT (The Surprise)
+                    // If this is an anomaly, the gap SLIDES up and down while moving left.
+                    if(p.isAnomaly) {
+                        p.top += p.anomalySpeed;
+                        p.bottom -= p.anomalySpeed; // Keep gap size constant, just shift position
+                        
+                        // Bounce the anomaly if it hits roof/floor
+                        if(p.top < 40 || p.top > height - GAP - 40) {
+                            p.anomalySpeed *= -1;
+                        }
+                    }
+
+                    // Collision Box
                     let pad = 8; 
                     if(player.x + pad < p.x + p.w && 
                        player.x + player.size - pad > p.x && 
@@ -555,9 +577,13 @@
                         switchBiome();
                         if(!PERF_MODE) shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
                         
-                        if(Math.random() > 0.5 && !PERF_MODE) {
-                            const words = ["POW", "GOOD", "NICE", "EZ", "WOAH"];
-                            floatTexts.push({text: words[Math.floor(Math.random()*words.length)], x: player.x, y: player.y-40, life: 1.0, vy: -2});
+                        // Bonus text for surviving an anomaly
+                        if(p.isAnomaly && !PERF_MODE) {
+                            floatTexts.push({text: "DODGED!", x: player.x, y: player.y-40, life: 1.2, vy: -3});
+                        }
+                        else if(Math.random() > 0.6 && !PERF_MODE) {
+                             const words = ["POW", "GOOD", "NICE", "EZ", "WOAH"];
+                             floatTexts.push({text: words[Math.floor(Math.random()*words.length)], x: player.x, y: player.y-40, life: 1.0, vy: -2});
                         }
                         
                         if(score >= TARGET_SCORE) winGame();
@@ -566,7 +592,7 @@
                 if(this.list.length > 0 && this.list[0].x < -100) this.list.shift();
             },
 
-            // --- OPTIMIZED DRAW LOGIC (Server -> Data Stream -> Quantum) ---
+            // --- DRAW LOGIC ---
             draw: function() {
                 let era = Math.floor(score / 10) % 3; 
                 let mainColor = BIOMES[currentBiome].border;
@@ -574,16 +600,28 @@
                 let pulse = Math.sin(frames * 0.1) * 0.5 + 0.5;
 
                 for(let p of this.list) {
+                    
+                    // VISUAL WARNING FOR ANOMALIES
+                    // If it moves, give it a scary "Red Alert" tint overlay
+                    let warningColor = p.isAnomaly && (frames % 10 < 5) ? "#ff0000" : mainColor;
+                    let activeColor = p.isAnomaly ? warningColor : mainColor;
+
                     // ERA 0: SERVER RACKS
                     if (era === 0) {
-                        if(!PERF_MODE) { ctx.shadowBlur = 15 + (pulse * 10); ctx.shadowColor = mainColor; }
+                        if(!PERF_MODE) { ctx.shadowBlur = p.isAnomaly ? 25 : (15 + (pulse * 10)); ctx.shadowColor = activeColor; }
                         [p.top, height - p.bottom].forEach((yStart, i) => {
                             let h = (i===0) ? p.top : p.bottom;
                             let yRect = (i===0) ? 0 : height - p.bottom;
-                            ctx.fillStyle = "rgba(10, 10, 10, 0.9)"; ctx.fillRect(p.x, yRect, p.w, h);
-                            ctx.lineWidth = 3; ctx.strokeStyle = mainColor; ctx.strokeRect(p.x, yRect - (i===0?5:0), p.w, h + 5);
+                            
+                            ctx.fillStyle = "rgba(10, 10, 10, 0.9)"; 
+                            ctx.fillRect(p.x, yRect, p.w, h);
+                            
+                            ctx.lineWidth = 3; ctx.strokeStyle = activeColor; 
+                            ctx.strokeRect(p.x, yRect - (i===0?5:0), p.w, h + 5);
+                            
+                            // Tech Lights
                             if(!PERF_MODE) {
-                                ctx.fillStyle = mainColor;
+                                ctx.fillStyle = activeColor;
                                 for(let k = 0; k < h; k += 40) {
                                     let lightY = (i===0) ? k : yRect + k;
                                     if((Math.floor(p.x + k) % 3) === 0) {
@@ -595,19 +633,22 @@
                                 }
                             }
                         });
-                        ctx.fillStyle = mainColor; 
+                        // End Caps
+                        ctx.fillStyle = activeColor; 
                         ctx.fillRect(p.x + 4, p.top - 15, p.w - 8, 15); 
                         ctx.fillRect(p.x + 4, height - p.bottom, p.w - 8, 15); 
                     }
-                    // ERA 1: DATA STREAM (Optimized)
+                    
+                    // ERA 1: DATA STREAM
                     else if (era === 1) {
-                        if(!PERF_MODE) { ctx.shadowBlur = 10; ctx.shadowColor = mainColor; }
+                        if(!PERF_MODE) { ctx.shadowBlur = 10; ctx.shadowColor = activeColor; }
                         ctx.fillStyle = "rgba(0, 20, 10, 0.85)"; 
                         ctx.fillRect(p.x, 0, p.w, p.top); ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
+                        
                         if(!PERF_MODE) {
                             ctx.save(); ctx.beginPath();
                             ctx.rect(p.x, 0, p.w, p.top); ctx.rect(p.x, height - p.bottom, p.w, p.bottom); ctx.clip();
-                            ctx.lineWidth = 8; ctx.strokeStyle = mainColor; ctx.setLineDash([12, 15]); 
+                            ctx.lineWidth = 8; ctx.strokeStyle = activeColor; ctx.setLineDash([12, 15]); 
                             for(let col = 0; col < 3; col++) {
                                 let xPos = p.x + 12 + (col * 15);
                                 let speed = (frames * (2 + col)); 
@@ -616,37 +657,41 @@
                             }
                             ctx.restore();
                         }
-                        ctx.lineWidth = 3; ctx.strokeStyle = mainColor;
+                        ctx.lineWidth = 3; ctx.strokeStyle = activeColor;
                         ctx.setLineDash([20, 10]); ctx.lineDashOffset = frames * -3; 
                         ctx.strokeRect(p.x, -5, p.w, p.top + 5); ctx.strokeRect(p.x, height - p.bottom, p.w, p.bottom + 5);
                         ctx.setLineDash([]); 
                     }
+                    
                     // ERA 2: QUANTUM SCANNER
                     else if (era === 2) {
-                        if(!PERF_MODE) { ctx.shadowBlur = 15; ctx.shadowColor = mainColor; }
+                        if(!PERF_MODE) { ctx.shadowBlur = 15; ctx.shadowColor = activeColor; }
                         ctx.fillStyle = "rgba(0, 5, 10, 0.95)";
                         ctx.fillRect(p.x, 0, p.w, p.top); ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
-                        ctx.save(); ctx.strokeStyle = mainColor; ctx.lineWidth = 3;
+                        
+                        ctx.save(); ctx.strokeStyle = activeColor; ctx.lineWidth = 3;
                         ctx.beginPath();
                         ctx.moveTo(p.x + 12, 0); ctx.lineTo(p.x + 12, p.top);
                         ctx.moveTo(p.x + p.w - 12, 0); ctx.lineTo(p.x + p.w - 12, p.top);
                         ctx.moveTo(p.x + 12, height - p.bottom); ctx.lineTo(p.x + 12, height);
                         ctx.moveTo(p.x + p.w - 12, height - p.bottom); ctx.lineTo(p.x + p.w - 12, height);
                         ctx.stroke();
+                        
                         let scanPos = (Math.sin(frames * 0.05) + 1) * 0.5; 
                         ctx.fillStyle = "#fff"; ctx.shadowBlur = 15; ctx.shadowColor = "#fff";
                         ctx.fillRect(p.x, scanPos * p.top, p.w, 4);
                         let botY = (height - p.bottom) + (scanPos * p.bottom);
                         ctx.fillRect(p.x, botY, p.w, 4);
                         ctx.restore();
-                        ctx.lineWidth = 2; ctx.strokeStyle = mainColor;
+                        
+                        ctx.lineWidth = 2; ctx.strokeStyle = activeColor;
                         ctx.strokeRect(p.x, -2, p.w, p.top+2); ctx.strokeRect(p.x, height - p.bottom, p.w, p.bottom+2);
                     }
                     ctx.shadowBlur = 0; 
                 }
             }
         };
-
+    
         // --- CORE FUNCTIONS ---
         function die() {
             flashScreen(); SFX.explode();
@@ -782,6 +827,7 @@
     </script>
 </body>
 </html>
+
 
 
 
