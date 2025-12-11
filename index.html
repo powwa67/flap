@@ -540,8 +540,8 @@
                 }
                 if(this.list.length > 0 && this.list[0].x < -100) this.list.shift();
             },
-          draw: function() {
-                // Era 0 = Server Racks, Era 1 = Wireframe, Era 2 = Quantum Scanner
+         draw: function() {
+                // Era 0 = Server Racks, Era 1 = Data Stream, Era 2 = Quantum Scanner
                 let era = Math.floor(score / 10) % 3; 
 
                 let mainColor = BIOMES[currentBiome].border;
@@ -551,7 +551,7 @@
 
                 for(let p of this.list) {
                     
-                    // --- STYLE 1: THE DATACENTER (Standard) ---
+                    // --- STYLE 1: THE DATACENTER (Hardware) ---
                     if (era === 0) {
                         if(!PERF_MODE) { ctx.shadowBlur = 15 + (pulse * 10); ctx.shadowColor = mainColor; }
                         
@@ -584,78 +584,83 @@
                         ctx.fillRect(p.x + 4, height - p.bottom, p.w - 8, 15); 
                     }
 
-                    // --- STYLE 2: UNSTABLE SECTOR (Wireframe) ---
+                    // --- STYLE 2: DATA STREAM (Software/Matrix Vibe) ---
                     else if (era === 1) {
-                        if(!PERF_MODE) { ctx.shadowBlur = 5; ctx.shadowColor = "#fff"; }
+                        if(!PERF_MODE) { ctx.shadowBlur = 10; ctx.shadowColor = mainColor; }
                         
-                        ctx.save();
-                        ctx.strokeStyle = mainColor;
-                        ctx.lineWidth = 2;
-                        
-                        ctx.setLineDash([10, 5]); 
-                        ctx.lineDashOffset = -frames * 2; 
+                        // 1. Semi-solid dark background (No longer transparent)
+                        ctx.fillStyle = "rgba(0, 20, 10, 0.85)"; 
+                        ctx.fillRect(p.x, 0, p.w, p.top);
+                        ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
 
+                        // 2. Falling Data Bits animation
+                        if(!PERF_MODE) {
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.rect(p.x, 0, p.w, p.top);
+                            ctx.rect(p.x, height - p.bottom, p.w, p.bottom);
+                            ctx.clip(); // Ensure bits don't fly off pillars
+
+                            ctx.fillStyle = mainColor;
+                            // Draw 3 columns of falling "bits"
+                            for(let col = 0; col < 3; col++) {
+                                let xPos = p.x + 10 + (col * 15);
+                                // Speed varies by column for "Parallax" feel
+                                let speed = (frames * (2 + col)) % 60; 
+                                
+                                for(let y = -60; y < height; y += 25) {
+                                    // Use math to create random-looking gaps in the stream
+                                    if(Math.sin(y * col + frames * 0.1) > -0.2) {
+                                        ctx.globalAlpha = 0.6;
+                                        ctx.fillRect(xPos, y + speed, 8, 12);
+                                    }
+                                }
+                            }
+                            ctx.restore();
+                        }
+
+                        // 3. Moving Data Packet Borders
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = mainColor;
+                        ctx.setLineDash([20, 10]); // Dashed look
+                        ctx.lineDashOffset = frames * -3; // Moving border
+                        
                         ctx.strokeRect(p.x, -5, p.w, p.top + 5);
                         ctx.strokeRect(p.x, height - p.bottom, p.w, p.bottom + 5);
                         
-                        ctx.setLineDash([]); 
-                        
-                        if(!PERF_MODE) {
-                            ctx.fillStyle = mainColor;
-                            for(let k=0; k<8; k++) { 
-                                let rx = p.x + Math.random()*p.w;
-                                let ry = Math.random() * height;
-                                if(ry < p.top || ry > height - p.bottom) {
-                                    ctx.fillRect(rx, ry, 2, 2);
-                                }
-                            }
-                        }
-                        ctx.restore();
+                        ctx.setLineDash([]); // Reset
                     }
 
-                    // --- STYLE 3: QUANTUM SCANNER (New Futuristic Vibe) ---
+                    // --- STYLE 3: QUANTUM SCANNER (High Security) ---
                     else if (era === 2) {
                         if(!PERF_MODE) { ctx.shadowBlur = 25; ctx.shadowColor = mainColor; }
 
-                        // 1. Sleek Dark Glass Body
                         ctx.fillStyle = "rgba(0, 5, 10, 0.95)";
                         ctx.fillRect(p.x, 0, p.w, p.top);
                         ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
 
                         ctx.save();
-                        
-                        // 2. Vertical "Energy Rails"
                         ctx.strokeStyle = mainColor;
                         ctx.lineWidth = 3;
-                        ctx.shadowBlur = 10; 
-                        ctx.shadowColor = "#fff"; // Inner white glow
+                        ctx.shadowBlur = 10; ctx.shadowColor = "#fff"; 
                         
                         ctx.beginPath();
-                        // Top Rails (Left & Right)
                         ctx.moveTo(p.x + 12, 0); ctx.lineTo(p.x + 12, p.top);
                         ctx.moveTo(p.x + p.w - 12, 0); ctx.lineTo(p.x + p.w - 12, p.top);
-                        // Bottom Rails
                         ctx.moveTo(p.x + 12, height - p.bottom); ctx.lineTo(p.x + 12, height);
                         ctx.moveTo(p.x + p.w - 12, height - p.bottom); ctx.lineTo(p.x + p.w - 12, height);
                         ctx.stroke();
 
-                        // 3. The "Laser Scan" (Moving Bar)
-                        let scanPos = (Math.sin(frames * 0.05) + 1) * 0.5; // Oscillates 0.0 to 1.0
+                        let scanPos = (Math.sin(frames * 0.05) + 1) * 0.5; 
                         ctx.fillStyle = "#fff";
                         ctx.shadowBlur = 20;
-
-                        // Top Scanner
                         ctx.fillRect(p.x, scanPos * p.top, p.w, 4);
-                        
-                        // Bottom Scanner
                         let botY = (height - p.bottom) + (scanPos * p.bottom);
                         ctx.fillRect(p.x, botY, p.w, 4);
 
                         ctx.restore();
 
-                        // 4. Clean Outer Border
-                        ctx.lineWidth = 2;
-                        ctx.strokeStyle = mainColor;
+                        ctx.lineWidth = 2; ctx.strokeStyle = mainColor;
                         ctx.strokeRect(p.x, -2, p.w, p.top+2);
                         ctx.strokeRect(p.x, height - p.bottom, p.w, p.bottom+2);
                     }
@@ -800,6 +805,7 @@
     </script>
 </body>
 </html>
+
 
 
 
