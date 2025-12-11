@@ -497,34 +497,42 @@
         const obstacles = {
             list: [],
             
-            // --- NEW SMART UPDATE LOGIC ---
+            // --- WEIGHTED RANDOMNESS UPDATE LOGIC ---
             update: function() {
                 // SPAWN LOGIC
                 if(frames % 55 === 0) {
                     let minH = 60; 
                     let maxH = height - GAP - minH;
                     
+                    // Get last position
                     let prevTop = (this.list.length > 0) ? this.list[this.list.length-1].top : (height - GAP) / 2;
                     
-                    // 1. Define movement constraints
-                    let maxShift = 220; 
-                    let minShift = 60; // Forces gap to move at least 60px
-
-                    // 2. Decide direction (Bias logic)
-                    let direction = Math.random() < 0.5 ? -1 : 1;
-                    if(prevTop < height * 0.25) direction = 1; // Too high? Go down.
-                    else if(prevTop > height * 0.55) direction = -1; // Too low? Go up.
-
-                    // 3. Calculate shift
-                    let shiftMag = Math.floor(Math.random() * (maxShift - minShift + 1)) + minShift;
-                    let move = shiftMag * direction;
+                    // 1. Calculate Position Percentage (0.0 = Top, 1.0 = Bottom)
+                    // We use this to weigh the dice roll.
+                    let positionPct = (prevTop - minH) / (maxH - minH);
                     
-                    let topH = prevTop + move;
-
-                    // 4. Safety Clamp
-                    if(topH < minH) topH = minH + (Math.random() * 50);
-                    if(topH > maxH) topH = maxH - (Math.random() * 50);
+                    // 2. Calculate "Down Chance"
+                    // If at top (0.0), chance to go down is 90%
+                    // If at bot (1.0), chance to go down is 10%
+                    // If at mid (0.5), chance to go down is 50%
+                    let downChance = 0.9 - (positionPct * 0.8);
                     
+                    let direction = (Math.random() < downChance) ? 1 : -1;
+
+                    // 3. Force "Significant Movement" (Anti-Flatline)
+                    // The gap MUST move at least 70px, up to 190px.
+                    let minStep = 70;
+                    let maxStep = 190;
+                    let step = Math.floor(Math.random() * (maxStep - minStep + 1)) + minStep;
+                    
+                    let topH = prevTop + (step * direction);
+
+                    // 4. Hard Clamps (Keep it playable)
+                    if(topH < minH) topH = minH + (Math.random() * 40);
+                    if(topH > maxH) topH = maxH - (Math.random() * 40);
+                    
+                    // -----------------------
+
                     let moveY = (Math.random()-0.5)*1.5; 
                     this.list.push({x: width, w: 55, top: topH, bottom: height-GAP-topH, passed: false, moveY: moveY});
                 }
@@ -774,6 +782,7 @@
     </script>
 </body>
 </html>
+
 
 
 
