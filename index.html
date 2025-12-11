@@ -497,7 +497,7 @@
         const obstacles = {
             list: [],
             
-            // --- WEIGHTED RANDOMNESS UPDATE LOGIC ---
+            // --- "UNCHAINED RANDOMNESS" UPDATE LOGIC ---
             update: function() {
                 // SPAWN LOGIC
                 if(frames % 55 === 0) {
@@ -507,29 +507,29 @@
                     // Get last position
                     let prevTop = (this.list.length > 0) ? this.list[this.list.length-1].top : (height - GAP) / 2;
                     
-                    // 1. Calculate Position Percentage (0.0 = Top, 1.0 = Bottom)
-                    // We use this to weigh the dice roll.
-                    let positionPct = (prevTop - minH) / (maxH - minH);
-                    
-                    // 2. Calculate "Down Chance"
-                    // If at top (0.0), chance to go down is 90%
-                    // If at bot (1.0), chance to go down is 10%
-                    // If at mid (0.5), chance to go down is 50%
-                    let downChance = 0.9 - (positionPct * 0.8);
-                    
-                    let direction = (Math.random() < downChance) ? 1 : -1;
+                    // 1. Determine Direction (Pure Chaos)
+                    // Default is 50/50 random chance.
+                    let direction = Math.random() < 0.5 ? 1 : -1;
 
-                    // 3. Force "Significant Movement" (Anti-Flatline)
-                    // The gap MUST move at least 70px, up to 190px.
-                    let minStep = 70;
-                    let maxStep = 190;
+                    // 2. Wall Bounce (The only safety net)
+                    // If we are touching the roof, FORCE down.
+                    if (prevTop < minH + 50) direction = 1;
+                    // If we are touching the floor, FORCE up.
+                    else if (prevTop > maxH - 50) direction = -1;
+
+                    // 3. Calculate Step Size (Harder)
+                    // minStep = 60 (Prevents "flat" boring levels)
+                    // maxStep = 240 (Allows MASSIVE jumps across the screen)
+                    let minStep = 60;
+                    let maxStep = 240;
                     let step = Math.floor(Math.random() * (maxStep - minStep + 1)) + minStep;
                     
                     let topH = prevTop + (step * direction);
 
-                    // 4. Hard Clamps (Keep it playable)
-                    if(topH < minH) topH = minH + (Math.random() * 40);
-                    if(topH > maxH) topH = maxH - (Math.random() * 40);
+                    // 4. Hard Clamps (Keep it physically on screen)
+                    // If the random jump pushes it off-screen, we clamp it back.
+                    if(topH < minH) topH = minH + (Math.random() * 30);
+                    if(topH > maxH) topH = maxH - (Math.random() * 30);
                     
                     // -----------------------
 
@@ -782,6 +782,7 @@
     </script>
 </body>
 </html>
+
 
 
 
