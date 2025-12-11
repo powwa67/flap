@@ -274,7 +274,7 @@
         resize();
 
         // --- GAME CONFIG ---
-        let TARGET_SCORE = 3; // CHANGE THIS to 30 for release, or lower for testing
+        let TARGET_SCORE = 3; 
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
@@ -786,6 +786,14 @@
             bgWin.style.opacity = '0';
             setTimeout(() => { bgWin.style.display = 'none'; }, 500);
 
+            // RESET SCORE TO 0 FOR ENDLESS RUN
+            score = 0; 
+            
+            // RESET BIOME TO MATCH SCORE
+            currentBiome = 0;
+            wrapper.style.borderColor = "#fff";
+            wrapper.style.boxShadow = "0 0 60px rgba(0,255,255,0.3)";
+            
             // UI SWITCH: Hide Progress, Show Score
             progressContainer.style.display = 'none';
             scoreCounter.style.display = 'block';
