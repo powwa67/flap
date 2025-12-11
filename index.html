@@ -20,7 +20,7 @@
             -webkit-user-select: none;
         }
 
-        /* The container is now sized by JS to be PERFECTLY 9:16 always */
+        /* --- FIXED RESOLUTION WRAPPER (Logic from previous fix) --- */
         #game-container-box {
             position: relative;
             background: #000;
@@ -28,7 +28,6 @@
             border: 3px solid #fff;
             border-radius: 8px;
             overflow: hidden;
-            /* Dimensions are set by JS resize() function */
         }
 
         .bg-gif {
@@ -47,7 +46,6 @@
             80% { transform: skew(-1deg); } 100% { transform: skew(1deg); }
         }
 
-        /* Canvas stretches to fill the explicitly sized container */
         canvas { display: block; width: 100%; height: 100%; }
 
         #ui-layer {
@@ -219,41 +217,25 @@
         const bgWin = document.getElementById('bg-win');
 
         // --- STRICT RESOLUTION ENFORCEMENT ---
-        // We now force the internal game logic to ALWAYS think it is 540x960.
-        // The display will scale this to fit the screen, but logic never changes.
         const LOGICAL_WIDTH = 540;
         const LOGICAL_HEIGHT = 960;
-        
-        // These replace the old dynamic width/height variables
         const width = LOGICAL_WIDTH;
         const height = LOGICAL_HEIGHT;
 
         function resize() {
-            // Get current window size
             let winW = window.innerWidth;
             let winH = window.innerHeight;
-            
-            // Calculate the scale required to fit 9:16 into the current window
-            // We want to fit LOGICAL_WIDTH/HEIGHT into winW/winH
             let scale = Math.min(winW / LOGICAL_WIDTH, winH / LOGICAL_HEIGHT);
-            
-            // Limit scale so it doesn't get absurdly huge on 4k monitors
             if (scale > 1.2 && winW > 800) scale = Math.min(scale, 1.0);
 
-            // Apply strict pixel sizes to the wrapper container
             let finalW = Math.floor(LOGICAL_WIDTH * scale);
             let finalH = Math.floor(LOGICAL_HEIGHT * scale);
             
             wrapper.style.width = finalW + "px";
             wrapper.style.height = finalH + "px";
-            
-            // Set canvas internal resolution to fixed logic size
-            // This prevents "fat pillars" - pillars are always relative to 540px.
             canvas.width = LOGICAL_WIDTH;
             canvas.height = LOGICAL_HEIGHT;
         }
-        
-        // Listen for resize and call immediately
         window.addEventListener('resize', resize);
         resize();
 
@@ -380,17 +362,14 @@ window.addEventListener('sys-buffer-ready', () => {
             }
         }
 
-        // --- PERFORMANCE TOGGLE FIX ---
         window.togglePerf = function(e) {
-            e.stopPropagation(); // CRITICAL: Stop game from starting
+            e.stopPropagation(); 
             PERF_MODE = !PERF_MODE;
             
             if(PERF_MODE) {
                 perfBtn.innerText = "GRAPHICS: LOW";
                 perfBtn.className = "low-mode";
-                // Clear heavy assets instantly
                 stars = []; nebulae = []; shootingStars = []; particles = [];
-                // Force a redraw to clear the canvas
                 ctx.fillStyle = "#000"; ctx.fillRect(0,0,width,height);
             } else {
                 perfBtn.innerText = "GRAPHICS: HIGH";
@@ -463,13 +442,11 @@ window.addEventListener('sys-buffer-ready', () => {
             const biome = BIOMES[currentBiome];
             
             if(PERF_MODE) {
-                // Low Graphics: Just Solid Color
                 ctx.fillStyle = biome.bgBot;
                 ctx.fillRect(0,0,width,height);
                 return;
             }
 
-            // High Graphics
             let grad=ctx.createLinearGradient(0,0,0,height); 
             grad.addColorStop(0, biome.bgTop); grad.addColorStop(1, biome.bgBot); 
             ctx.fillStyle=grad; ctx.fillRect(0,0,width,height);
@@ -521,7 +498,24 @@ window.addEventListener('sys-buffer-ready', () => {
             list: [],
             update: function() {
                 if(frames % 55 === 0) {
-                    let minH=60, maxH=height-GAP-minH, topH=Math.random()*(maxH-minH)+minH;
+                    // --- SMART GAP GENERATION ---
+                    // Prevent impossible jumps by limiting max height change relative to last pipe
+                    let minH = 60;
+                    let maxH = height - GAP - minH;
+                    
+                    let prevTop = (this.list.length > 0) ? this.list[this.list.length-1].top : (height - GAP) / 2;
+                    
+                    // Max vertical shift per pipe (reachable zone)
+                    // 35% of screen height is roughly the max safe jump distance between pipes
+                    let maxShift = height * 0.35; 
+                    
+                    let randomShift = (Math.random() * maxShift * 2) - maxShift;
+                    let topH = prevTop + randomShift;
+
+                    // Clamp within screen bounds
+                    if(topH < minH) topH = minH;
+                    if(topH > maxH) topH = maxH;
+                    
                     let moveY = (Math.random()-0.5)*1.5;
                     this.list.push({x: width, w: 55, top: topH, bottom: height-GAP-topH, passed: false, moveY: moveY});
                 }
@@ -569,39 +563,28 @@ window.addEventListener('sys-buffer-ready', () => {
             if(!PERF_MODE) {
                 for(let i=0; i<25; i++) particles.push({type: 'explode', x: player.x, y: player.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1.0, color: '#0ff', size: Math.random()*8+3});
             }
-            
             gameState = 'DIE_ANIM';
-            
             bgFail.style.display = 'block';
             setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
-
-            setTimeout(() => {
-                deathModal.style.display = 'flex';
-            }, 800);
+            setTimeout(() => { deathModal.style.display = 'flex'; }, 800);
         }
 
         function winGame() {
-    gameState = 'WIN_PAUSE'; 
-    MUSIC.pause();
-    SFX.win();
-    flashScreen();
-    
-    bgWin.style.display = 'block';
-    setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
-    winModal.style.display = 'flex';
-
-    window.dispatchEvent(new Event('sys-buffer-ready'));
-}
+            gameState = 'WIN_PAUSE'; 
+            MUSIC.pause();
+            SFX.win();
+            flashScreen();
+            bgWin.style.display = 'block';
+            setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
+            winModal.style.display = 'flex';
+            window.dispatchEvent(new Event('sys-buffer-ready'));
+        }
 
         window.resetLevel = function() {
             deathModal.style.display = 'none';
-            
             bgFail.style.opacity = '0';
             bgWin.style.opacity = '0';
-            setTimeout(() => { 
-                bgFail.style.display = 'none'; 
-                bgWin.style.display = 'none';
-            }, 500);
+            setTimeout(() => { bgFail.style.display = 'none'; bgWin.style.display = 'none'; }, 500);
 
             gameState = 'START';
             score = 0; frames = 0;
@@ -689,7 +672,6 @@ window.addEventListener('sys-buffer-ready', () => {
 
         function handleInput(e) {
             if(e.type === 'keydown' && e.code === 'Space') e.preventDefault();
-            // Don't trigger if clicking performance button
             if(e.target.id === 'perf-btn') return;
             
             if(gameState === 'WIN_PAUSE') return;
