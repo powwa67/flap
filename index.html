@@ -55,6 +55,7 @@
 
         #top-bar {
             display: flex; align-items: center; padding: 20px; width: 100%; box-sizing: border-box;
+            justify-content: center; /* Center content */
         }
 
         #progress-container { flex-grow: 1; display: flex; flex-direction: column; }
@@ -68,6 +69,16 @@
         #progress-fill {
             width: 0%; height: 100%; background: linear-gradient(90deg, #00ffff, #bd00ff);
             transition: width 0.1s linear; box-shadow: 0 0 20px #fff;
+        }
+        
+        /* NEW: Score Counter Style */
+        #score-counter {
+            display: none; /* Hidden by default */
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 0 0 20px #00ffff, 4px 4px 0 #000;
+            -webkit-text-stroke: 2px #000;
+            transform: skew(-5deg);
         }
 
         #main-menu {
@@ -131,6 +142,13 @@
         }
         .btn-copy:active { box-shadow: 0 0 0 #003366; }
 
+        .btn-continue {
+            background: linear-gradient(180deg, #ff00ff, #aa00aa);
+            box-shadow: 0 6px 0 #660066, 0 15px 20px rgba(0,0,0,0.5);
+            margin-top: 15px;
+        }
+        .btn-continue:active { box-shadow: 0 0 0 #660066; }
+
         .key-container { margin: 20px 0; width: 100%; max-width: 350px; }
 
         .key-box {
@@ -174,6 +192,7 @@
                         <div id="progress-fill"></div>
                     </div>
                 </div>
+                <div id="score-counter">30</div>
             </div>
 
             <div id="main-menu">
@@ -196,6 +215,8 @@
                 <div class="key-label">DAILY API KEY</div>
                 <div id="key-text" class="key-box">Loading...</div>
                 <button class="btn btn-copy" onclick="copyKey('key-text', this)">COPY KEY</button>
+                
+                <button class="btn btn-continue" onclick="continueGame()">CONTINUE PLAYING</button>
             </div>
         </div>
     </div>
@@ -203,7 +224,9 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const progressContainer = document.getElementById('progress-container');
         const progressFill = document.getElementById('progress-fill');
+        const scoreCounter = document.getElementById('score-counter');
         const wrapper = document.getElementById('game-container-box');
         const flashOverlay = document.getElementById('flash-overlay');
         const warpOverlay = document.getElementById('warp-overlay');
@@ -242,7 +265,7 @@
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
-        let GAP = 170; /* INCREASED FROM 165 TO 180 */
+        let GAP = 170; 
         let PERF_MODE = false;
 
         // --- BIOMES DEFINITION ---
@@ -256,6 +279,7 @@
         ];
 
         let currentBiome = 0;
+        let infiniteMode = false; // NEW FLAG
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = new AudioContext();
@@ -574,7 +598,15 @@
                     }
 
                     if(p.x + p.w < player.x && !p.passed) {
-                        score++; p.passed = true; updateProgress(); SFX.score(); triggerShake();
+                        score++; p.passed = true; SFX.score(); triggerShake();
+                        
+                        // --- CHECK MODE ---
+                        if (infiniteMode) {
+                            scoreCounter.innerText = score;
+                        } else {
+                            updateProgress();
+                        }
+                        
                         switchBiome();
                         if(!PERF_MODE) shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
                         
@@ -587,7 +619,8 @@
                              floatTexts.push({text: words[Math.floor(Math.random()*words.length)], x: player.x, y: player.y-40, life: 1.0, vy: -2});
                         }
                         
-                        if(score >= TARGET_SCORE) winGame();
+                        // ONLY WIN IF NOT INFINITE MODE
+                        if(!infiniteMode && score >= TARGET_SCORE) winGame();
                     }
                 }
                 if(this.list.length > 0 && this.list[0].x < -100) this.list.shift();
@@ -715,6 +748,22 @@
             window.dispatchEvent(new Event('sys-buffer-ready'));
         }
 
+        // --- NEW CONTINUE FUNCTION ---
+        window.continueGame = function() {
+            infiniteMode = true;
+            winModal.style.display = 'none';
+            bgWin.style.opacity = '0';
+            setTimeout(() => { bgWin.style.display = 'none'; }, 500);
+
+            // UI SWITCH: Hide Progress, Show Score
+            progressContainer.style.display = 'none';
+            scoreCounter.style.display = 'block';
+            scoreCounter.innerText = score;
+
+            gameState = 'PLAY';
+            MUSIC.resume();
+        };
+
         window.resetLevel = function() {
             deathModal.style.display = 'none';
             bgFail.style.opacity = '0';
@@ -724,6 +773,12 @@
             gameState = 'START';
             score = 0; frames = 0;
             currentBiome = 0; 
+            infiniteMode = false; // Reset mode
+
+            // UI RESET: Show Progress, Hide Score
+            progressContainer.style.display = 'flex';
+            scoreCounter.style.display = 'none';
+
             wrapper.style.borderColor = "#fff";
             wrapper.style.boxShadow = "0 0 60px rgba(0,255,255,0.3)";
             updateProgress();
@@ -827,21 +882,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
