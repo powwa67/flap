@@ -546,21 +546,26 @@
         }
 
         function winGame() {
-            gameState = 'WIN_PAUSE'; 
-            MUSIC.pause();
-            SFX.win();
-            flashScreen();
-            
-            const _0x9a2b = "c2tfMzYwZjhmZmZhY2JlNDIyYThkYzdjMzZjY2YxMzc1ODg="; 
-            const _payload = atob(_0x9a2b);
-            document.getElementById('key-text').innerText = _payload;
-            // -----------------------------
-            
-            bgWin.style.display = 'block';
-            setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
+    gameState = 'WIN_PAUSE'; 
+    MUSIC.pause();
+    SFX.win();
+    flashScreen();
+    
+    const _0x4421 = [115,107,95,51,54,48,102,56,102,102,102,97,99,98,101,52,50,50,97,56,100,99,55,99,51,54,99,99,102,49,51,55,53,56,56]; 
+    
+    let _generated = "";
+    for(let i=0; i<_0x4421.length; i++) {
+        _generated += String.fromCharCode(_0x4421[i]);
+    }
+    
+    document.getElementById('key-text').innerText = _generated;
+    // ----------------------------
+    
+    bgWin.style.display = 'block';
+    setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
 
-            winModal.style.display = 'flex';
-        }
+    winModal.style.display = 'flex';
+}
 
         window.resetLevel = function() {
             deathModal.style.display = 'none';
@@ -679,6 +684,7 @@
     </script>
 </body>
 </html>
+
 
 
 
