@@ -15,19 +15,33 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            width: 100vw;
             user-select: none;
             -webkit-user-select: none;
         }
 
+        /* --- FIXED RESOLUTION WRAPPER --- */
         #game-wrapper {
             position: relative;
+            
+            /* 1. Enforce strict Phone Aspect Ratio (9:16) */
+            aspect-ratio: 9 / 16;
+
+            /* 2. Sizing Logic: 
+               - Try to fill 95% of the screen HEIGHT first (for landscape/desktop).
+               - If that makes it too wide, cap it at 95% of screen WIDTH.
+            */
+            height: 95vh;
+            width: auto;
+            max-width: 95vw;
+
+            /* 3. Logical Cap: prevent it from becoming massive on 4k monitors */
+            max-height: 850px; 
+
+            /* Visuals */
             box-shadow: 0 0 60px rgba(0, 255, 255, 0.3);
-            border: 3px solid #fff;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 480px;
-            aspect-ratio: 9/16;
-            max-height: 95vh;
+            border: 4px solid #fff; /* Thicker border for phone bezel look */
+            border-radius: 24px;    /* Rounded corners like modern phones */
             background: #000;
             overflow: hidden;
             transition: border-color 0.5s, box-shadow 0.5s;
@@ -683,9 +697,3 @@ window.addEventListener('sys-buffer-ready', () => {
     </script>
 </body>
 </html>
-
-
-
-
-
-
