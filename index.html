@@ -113,7 +113,12 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 20px rgba(0, 0, 0, 0.8);
             border-radius: 6px; 
             padding: 10px; 
-            overflow-y: auto; 
+            
+            /* --- SCROLLING FIXES --- */
+            overflow-y: auto;                /* Enable vertical scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling for iPhone/iOS */
+            pointer-events: auto;            /* VITAL: Allows touch interaction */
+            
             text-align: left; 
             box-sizing: border-box;
             font-family: 'Russo One', sans-serif; 
@@ -1221,6 +1226,7 @@
     </script>
 </body>
 </html>
+
 
 
 
