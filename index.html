@@ -1079,7 +1079,15 @@
 
         function handleInput(e) {
             if(e.type === 'keydown' && e.code === 'Space') e.preventDefault();
+            
+            // --- FIX START ---
+            // 1. Ignore clicks on the Graphics Button
             if(e.target.id === 'perf-btn') return;
+            
+            // 2. Ignore clicks/touches on the LEADERBOARD (and anything inside it)
+            // This allows you to scroll without the bird jumping or the game starting.
+            if(e.target.closest('#leaderboard')) return;
+            // --- FIX END ---
             
             if(gameState === 'WIN_PAUSE') return;
             if(gameState === 'START') startGame();
@@ -1226,6 +1234,7 @@
     </script>
 </body>
 </html>
+
 
 
 
