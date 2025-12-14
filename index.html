@@ -48,6 +48,12 @@
             40% { transform: skew(2deg); } 60% { transform: skew(0deg); }
             80% { transform: skew(-1deg); } 100% { transform: skew(1deg); }
         }
+        
+        /* TIME STOP EFFECT */
+        .time-frozen {
+            filter: grayscale(100%) contrast(120%) brightness(110%);
+            transition: filter 0.5s ease-out;
+        }
 
         canvas { display: block; width: 100%; height: 100%; }
 
@@ -348,14 +354,10 @@
         resize();
 
         // --- GAME CONFIG & VERSION CONTROL ---
-        // Change this ID to force everyone to replay Level 1 AND RESET DAILY RANKING
         const KEY_ID = "day_5"; 
-        
-        // --- KEY WARNING SWITCH ---
-        // Set this to "ON" to show the warning, "OFF" to hide it.
         const KEY_WARNING_MODE = "ON"; 
 
-        let TARGET_SCORE = 50; 
+        let TARGET_SCORE = 70; 
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
@@ -413,6 +415,10 @@
         BGM.loop = true;
         BGM.volume = 0.6;
         
+        // --- NEW VARIABLES ---
+        let timeStopActive = false;
+        let timeStopTimer = 0;
+
         function playTone(freq, type, duration, vol=0.1, delay=0) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
@@ -431,6 +437,10 @@
             score: () => playTone(1200, 'sine', 0.1, 0.05),
             shieldUp: () => playTone(880, 'sine', 0.3, 0.1),
             shieldBreak: () => { playTone(150, 'sawtooth', 0.2, 0.2); playTone(100, 'square', 0.2, 0.2, 0.05); },
+            timeStop: () => { 
+                playTone(800, 'sawtooth', 0.5, 0.2);
+                setTimeout(() => playTone(50, 'square', 1.0, 0.3), 100);
+            },
             win: () => {
                 let notes = [523.25, 659.25, 783.99, 1046.50];
                 notes.forEach((n, i) => playTone(n, 'triangle', 0.4, 0.1, i*0.1));
@@ -678,28 +688,32 @@
                     let anomalySpeed = isAnomaly ? (speedVal * anomalyDir) : 0;
                     let moveY = (Math.random()-0.5)*1.5; 
                     
-                    let spawnShield = false;
-                    let forceStatic = false; 
+                    // --- SPAWN LOGIC (LEVEL 1 + INFINITE) ---
+                    let spawnType = null;
 
+                    // 1. SHIELD (Normal Mode - Randomly between Score 15-30)
                     if (!infiniteMode && score >= 15 && score <= 30 && !hasShieldSpawned && Math.random() < 0.15 && !player.hasShield) {
-                        spawnShield = true;
-                        hasShieldSpawned = true;
+                        spawnType = 'SHIELD'; hasShieldSpawned = true;
                     }
                     
-                    if (infiniteMode && pipeSpawnCount % 30 === 0 && !player.hasShield) {
-                        spawnShield = true;
+                    // 2. SHIELD (Infinite Mode - Every 25 Pillars)
+                    if (infiniteMode && pipeSpawnCount % 25 === 0 && !player.hasShield) {
+                        spawnType = 'SHIELD';
+                    }
+                    
+                    // 3. CLOCK (ALL MODES - Every 30 Pillars)
+                    if (pipeSpawnCount % 30 === 0 && !timeStopActive) {
+                        spawnType = 'CLOCK';
                     }
 
-                    if (spawnShield) {
+                    let forceStatic = false;
+                    if (spawnType) {
                         forceStatic = true; 
-                        items.push({ x: width + 20, y: topH + (GAP / 2), type: 'SHIELD', taken: false });
+                        items.push({ x: width + 20, y: topH + (GAP / 2), type: spawnType, taken: false });
                     }
 
                     this.list.push({
-                        x: width, 
-                        w: 55, 
-                        top: topH, 
-                        bottom: height-GAP-topH, 
+                        x: width, w: 55, top: topH, bottom: height-GAP-topH, 
                         passed: false, 
                         moveY: forceStatic ? 0 : moveY, 
                         isAnomaly: forceStatic ? false : isAnomaly,     
@@ -711,13 +725,17 @@
 
                 for(let p of this.list) {
                     p.x -= SPEED;
-                    p.top += p.moveY; 
-                    if(p.top < 30 || p.top > height - GAP - 30) p.moveY *= -1;
+                    
+                    // FREEZE HAZARDS IF TIME STOP IS ACTIVE
+                    if (!timeStopActive) {
+                        p.top += p.moveY; 
+                        if(p.top < 30 || p.top > height - GAP - 30) p.moveY *= -1;
 
-                    if(p.isAnomaly) {
-                        p.top += p.anomalySpeed;
-                        p.bottom -= p.anomalySpeed; 
-                        if(p.top < 40 || p.top > height - GAP - 40) p.anomalySpeed *= -1;
+                        if(p.isAnomaly) {
+                            p.top += p.anomalySpeed;
+                            p.bottom -= p.anomalySpeed; 
+                            if(p.top < 40 || p.top > height - GAP - 40) p.anomalySpeed *= -1;
+                        }
                     }
 
                     let pad = 8; 
@@ -747,8 +765,8 @@
                         else updateProgress();
                         
                         switchBiome();
-                        if(!PERF_MODE) shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
-                        if(p.isAnomaly && !PERF_MODE) floatTexts.push({text: "ANOMALY!", x: player.x, y: player.y-40, life: 1.2, vy: -3});
+                        if(!PERF_MODE && !timeStopActive) shockwaves.push({x: player.x, y: player.y, r: 10, alpha: 1});
+                        if(p.isAnomaly && !PERF_MODE && !timeStopActive) floatTexts.push({text: "ANOMALY!", x: player.x, y: player.y-40, life: 1.2, vy: -3});
                         if(!infiniteMode && score >= TARGET_SCORE) winGame();
                     }
                 }
@@ -933,6 +951,10 @@
             pipeSpawnCount = 0; 
             currentBiome = 0; 
             
+            // RESET TIME STOP ON DEATH
+            timeStopActive = false;
+            canvas.classList.remove('time-frozen');
+            
             if (isUnlocked) {
                 infiniteMode = true;
                 progressContainer.style.display = 'none';
@@ -975,12 +997,30 @@
         function updatePhysics() {
             if(gameState !== 'PLAY' && gameState !== 'DIE_ANIM') return;
             
-            bgOffset -= SPEED * 0.5; if(bgOffset < -100) bgOffset = 0;
-            globalHue = (globalHue + 1) % 360;
-            frames++;
-            updateGalaxy();
+            // --- TIME STOP LOGIC ---
+            if (timeStopActive) {
+                timeStopTimer--;
+                if (timeStopTimer <= 0) {
+                    timeStopActive = false;
+                    canvas.classList.remove('time-frozen'); 
+                    SFX.shieldUp(); // Sound when time resumes
+                }
+            }
 
-            particles = particles.filter(p => { if(p.type==='dust') { p.x -= p.speed; if(p.x<0) p.x=width; return true; } p.x += p.vx; p.y += p.vy; p.life -= 0.03; return p.life > 0; });
+            // FREEZE BACKGROUND IF TIME STOPPED
+            if (!timeStopActive) {
+                bgOffset -= SPEED * 0.5; if(bgOffset < -100) bgOffset = 0;
+                globalHue = (globalHue + 1) % 360;
+                updateGalaxy();
+            }
+
+            frames++;
+
+            // FREEZE PARTICLES
+            if (!timeStopActive) {
+                particles = particles.filter(p => { if(p.type==='dust') { p.x -= p.speed; if(p.x<0) p.x=width; return true; } p.x += p.vx; p.y += p.vy; p.life -= 0.03; return p.life > 0; });
+            }
+            
             shockwaves = shockwaves.filter(s => { s.r+=10; s.alpha-=0.05; return s.alpha>0; });
             floatTexts = floatTexts.filter(f => { f.y+=f.vy; f.life-=0.02; return f.life>0; });
             trail.forEach(t => t.alpha -= 0.08);
@@ -992,9 +1032,17 @@
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 if(dist < 40 && !item.taken) {
                    item.taken = true;
-                   player.hasShield = true;
-                   SFX.shieldUp();
-                   if(!PERF_MODE) floatTexts.push({text: "SHIELD!", x: player.x, y: player.y-40, life: 1.0, vy: -2});
+                   if (item.type === 'SHIELD') {
+                       player.hasShield = true;
+                       SFX.shieldUp();
+                       if(!PERF_MODE) floatTexts.push({text: "SHIELD!", x: player.x, y: player.y-40, life: 1.0, vy: -2});
+                   } else if (item.type === 'CLOCK') {
+                       timeStopActive = true;
+                       timeStopTimer = 60 * 5; 
+                       canvas.classList.add('time-frozen'); 
+                       SFX.timeStop();
+                       if(!PERF_MODE) floatTexts.push({text: "ZA WARUDO!", x: player.x, y: player.y-40, life: 1.5, vy: -2});
+                   }
                 }
                 return item.x > -50 && !item.taken;
             });
@@ -1028,19 +1076,30 @@
 
             drawGalaxy(); drawGridLines();
             ctx.lineWidth = 4; for(let s of shockwaves) { ctx.strokeStyle = `rgba(255, 255, 255, ${s.alpha})`; ctx.beginPath(); ctx.arc(s.x+15, s.y+15, s.r, 0, Math.PI*2); ctx.stroke(); }
+            
             ctx.font = "900 24px 'Russo One'"; ctx.textAlign = "center";
             for(let f of floatTexts) { ctx.save(); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.shadowBlur = 10; ctx.shadowColor = '#0ff'; ctx.globalAlpha = f.life; ctx.strokeText(f.text, f.x, f.y); ctx.fillText(f.text, f.x, f.y); ctx.restore(); }
             
             for(let item of items) {
                 ctx.save();
-                ctx.shadowBlur = 15; ctx.shadowColor = '#0ff';
-                ctx.strokeStyle = `hsla(180, 100%, 50%, ${Math.abs(Math.sin(frames*0.1)) + 0.5})`;
+                ctx.shadowBlur = 15; 
+                
+                if (item.type === 'SHIELD') {
+                    ctx.shadowColor = '#0ff';
+                    ctx.strokeStyle = `hsla(180, 100%, 50%, ${Math.abs(Math.sin(frames*0.1)) + 0.5})`;
+                    ctx.fillStyle = "#fff"; 
+                    ctx.fillText("S", item.x, item.y+5);
+                } else if (item.type === 'CLOCK') {
+                    ctx.shadowColor = '#ff0000'; 
+                    ctx.strokeStyle = `hsla(0, 100%, 60%, ${Math.abs(Math.sin(frames*0.2)) + 0.5})`;
+                    ctx.fillStyle = "#ffaaaa";
+                    ctx.fillText("T", item.x, item.y+5); 
+                }
+                
                 ctx.lineWidth = 4;
                 ctx.beginPath();
                 ctx.arc(item.x, item.y, 15, 0, Math.PI*2);
                 ctx.stroke();
-                ctx.fillStyle = "#fff"; ctx.font = "16px monospace";
-                ctx.fillText("S", item.x, item.y+5);
                 ctx.restore();
             }
 
@@ -1161,14 +1220,17 @@
 
             if(score===0 && !isAuto) { alert("Play first!"); return; }
             
+            // SECURITY FIX: FORCE NUMBER TYPE
+            let scoreToSend = parseInt(score, 10);
+            
             submitBtn.innerText = isAuto ? "AUTO-SENDING..." : "CHECKING...";
             submitBtn.disabled = true; nameInput.disabled = true;
 
             const dailyCollection = `leaderboard_${KEY_ID}`;
             
             Promise.all([
-                submitToCollection("leaderboard", name, score),   
-                submitToCollection(dailyCollection, name, score)
+                submitToCollection("leaderboard", name, scoreToSend),   
+                submitToCollection(dailyCollection, name, scoreToSend)
             ]).then(() => {
                 submitBtn.innerText = "SENT!";
                 submitBtn.style.background = "#333";
@@ -1190,4 +1252,3 @@
     </script>
 </body>
 </html>
-
