@@ -357,7 +357,7 @@
         const KEY_ID = "day_5"; 
         const KEY_WARNING_MODE = "ON"; 
 
-        let TARGET_SCORE = 70; 
+        let TARGET_SCORE = 50; 
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
@@ -418,6 +418,10 @@
         // --- NEW VARIABLES ---
         let timeStopActive = false;
         let timeStopTimer = 0;
+        
+        // --- LEVEL 1 LIMITS ---
+        let level1ShieldCount = 0;
+        let level1ClockCount = 0;
 
         function playTone(freq, type, duration, vol=0.1, delay=0) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -688,21 +692,28 @@
                     let anomalySpeed = isAnomaly ? (speedVal * anomalyDir) : 0;
                     let moveY = (Math.random()-0.5)*1.5; 
                     
-                    // --- SPAWN LOGIC (LEVEL 1 + INFINITE) ---
+                    // --- SPAWN LOGIC START ---
                     let spawnType = null;
 
-                    // 1. SHIELD (Normal Mode - Randomly between Score 15-30)
-                    if (!infiniteMode && score >= 15 && score <= 30 && !hasShieldSpawned && Math.random() < 0.15 && !player.hasShield) {
-                        spawnType = 'SHIELD'; hasShieldSpawned = true;
+                    // 1. SHIELD (Level 1: Max 2 times total, random chance)
+                    if (!infiniteMode && level1ShieldCount < 2 && Math.random() < 0.1 && !player.hasShield) {
+                        spawnType = 'SHIELD';
+                        level1ShieldCount++;
                     }
                     
-                    // 2. SHIELD (Infinite Mode - Every 25 Pillars)
+                    // 2. SHIELD (Infinite Mode: Every 25 Pillars)
                     if (infiniteMode && pipeSpawnCount % 25 === 0 && !player.hasShield) {
                         spawnType = 'SHIELD';
                     }
                     
-                    // 3. CLOCK (ALL MODES - Every 30 Pillars)
-                    if (pipeSpawnCount % 30 === 0 && !timeStopActive) {
+                    // 3. CLOCK (Level 1: Score > 30, Max 2 times)
+                    if (!infiniteMode && score >= 30 && level1ClockCount < 2 && Math.random() < 0.15 && !timeStopActive) {
+                        spawnType = 'CLOCK';
+                        level1ClockCount++;
+                    }
+
+                    // 4. CLOCK (Infinite Mode: Every 30 Pillars)
+                    if (infiniteMode && pipeSpawnCount % 30 === 0 && !timeStopActive) {
                         spawnType = 'CLOCK';
                     }
 
@@ -955,6 +966,10 @@
             timeStopActive = false;
             canvas.classList.remove('time-frozen');
             
+            // RESET LEVEL 1 SPAWN COUNTERS
+            level1ShieldCount = 0;
+            level1ClockCount = 0;
+            
             if (isUnlocked) {
                 infiniteMode = true;
                 progressContainer.style.display = 'none';
@@ -1076,7 +1091,6 @@
 
             drawGalaxy(); drawGridLines();
             ctx.lineWidth = 4; for(let s of shockwaves) { ctx.strokeStyle = `rgba(255, 255, 255, ${s.alpha})`; ctx.beginPath(); ctx.arc(s.x+15, s.y+15, s.r, 0, Math.PI*2); ctx.stroke(); }
-            
             ctx.font = "900 24px 'Russo One'"; ctx.textAlign = "center";
             for(let f of floatTexts) { ctx.save(); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.shadowBlur = 10; ctx.shadowColor = '#0ff'; ctx.globalAlpha = f.life; ctx.strokeText(f.text, f.x, f.y); ctx.fillText(f.text, f.x, f.y); ctx.restore(); }
             
