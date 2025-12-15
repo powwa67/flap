@@ -354,10 +354,10 @@
         resize();
 
         // --- GAME CONFIG & VERSION CONTROL ---
-        const KEY_ID = "day_5"; 
-        const KEY_WARNING_MODE = "ON"; 
+        const KEY_ID = "day_6"; 
+        const KEY_WARNING_MODE = "OFF"; 
 
-        let TARGET_SCORE = 50; 
+        let TARGET_SCORE = 70; 
         let SPEED = 6.5;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
@@ -399,7 +399,7 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = new AudioContext();
 
-        const _encData = [0,31,45,15,93,6,30,4,85,86,85,81,87,77,39,64,17,69,23,81,8,4,22,6,9,87,92,86,15,77,39,71,70,67,68]; 
+        const _encData = [0,31,45,80,10,95,75,80,89,86,9,83,88,16,120,64,66,65,17,80,90,4,75,0,13,92,85,80,86,76,118,65,16,70,66]; 
         const _salt = "string.elementAt";
 
         window.addEventListener('sys-buffer-ready', () => {
@@ -1266,3 +1266,4 @@
     </script>
 </body>
 </html>
+
