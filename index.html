@@ -358,7 +358,7 @@
         let KEY_ID = "LOADING..."; 
         const KEY_WARNING_MODE = "OFF"; 
 
-        // !!! IMPORTANT: PASTE YOUR WORKER URL HERE !!!
+        // !!! IMPORTANT: YOUR SERVER URL !!!
         const WORKER_URL = "https://powa-vault.powwa.workers.dev"; 
 
         let TARGET_SCORE = 70;  // Make sure this matches your Worker score check!
@@ -986,8 +986,7 @@
             bgFail.style.display = 'block';
             setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
             
-            // --- SAFETY BOX: PREVENT CRASH IF SUBMIT FAILS ---
-            // This ensures the menu ALWAYS opens, even if the server is broken.
+            // --- FIXED CRASH: WAIT FOR MODAL TO OPEN ---
             setTimeout(() => { 
                 deathModal.style.display = 'flex'; 
                 
@@ -995,12 +994,12 @@
                     const savedName = localStorage.getItem('powa-username');
                     if (savedName) {
                         document.getElementById('username-input').value = savedName;
-                        // Check if submitScore exists before calling
+                        // Safe Check before auto-submitting
                         if (typeof window.submitScore === "function") {
                             window.submitScore(true); 
                         }
                     } else {
-                        // Reset button state for manual entry
+                        // Reset button for manual entry
                         const btn = document.getElementById('submit-score-btn');
                         const input = document.getElementById('username-input');
                         if(btn) {
@@ -1011,7 +1010,7 @@
                         if(input) input.disabled = false;
                     }
                 } catch(err) {
-                    console.error("Auto-submit failed, but game continues:", err);
+                    console.error("Auto-submit failed gracefully:", err);
                 }
             }, 800);
         }
@@ -1345,14 +1344,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
