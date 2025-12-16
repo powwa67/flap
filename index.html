@@ -748,6 +748,9 @@ const obstacles = {
                         forceStatic = true; 
                         items.push({ x: width + 20, y: topH + (GAP / 2), type: spawnType, taken: false });
                     }
+                    
+                    // CALCULATE CENTER Y FOR BREATHING
+                    let centerY = topH + (GAP / 2);
 
                     this.list.push({
                         x: width, w: 55, top: topH, bottom: height-GAP-topH, 
@@ -755,18 +758,22 @@ const obstacles = {
                         isAnomaly: forceStatic ? false : isAnomaly,     
                         anomalySpeed: forceStatic ? 0 : anomalySpeed, 
                         
-                        // --- CHAOS DNA (Unique per pillar) ---
-                        // Wave A: The slow, deep "breathing"
-                        chaosSpeedA: 0.02 + Math.random() * 0.05, 
-                        chaosPhaseA: Math.random() * Math.PI * 2, // Random start point 0-360 deg
+                        // --- UNIQUE BREATHING DNA ---
+                        // 1. Center Point: The pipe expands/contracts around this Y position
+                        centerY: centerY,
                         
-                        // Wave B: The faster, smaller "jitters"
-                        chaosSpeedB: 0.08 + Math.random() * 0.15,
-                        chaosPhaseB: Math.random() * Math.PI * 2,
+                        // 2. Speed: How fast this specific pipe opens/closes
+                        // Random between 0.03 (Slow) and 0.08 (Fast)
+                        breathSpeed: 0.03 + Math.random() * 0.05,
                         
-                        // How wide this specific pillar is allowed to open/close
-                        chaosAmp: 30 + Math.random() * 30, 
-                        // -------------------------------------
+                        // 3. Phase: Starts the sine wave at a random point
+                        // This ensures pipes are never synchronized
+                        breathPhase: Math.random() * Math.PI * 2,
+                        
+                        // 4. Amplitude: How much the gap changes size
+                        // Random range of motion (Deep breath vs Shallow breath)
+                        breathAmp: 30 + Math.random() * 40,
+                        // ----------------------------
 
                         hasBeenHit: false
                     });
@@ -784,34 +791,23 @@ const obstacles = {
                             p.bottom -= p.anomalySpeed; 
                             if(p.top < 40 || p.top > height - GAP - 40) p.anomalySpeed *= -1;
                         } else {
-                            // --- STANDARD: Dual-Wave Chaos (Crushing) ---
+                            // --- STANDARD: Smooth Independent Breathing ---
                             
-                            // 1. Calculate the center of the current gap (we want to crush around this point)
-                            // Note: p.bottom is the HEIGHT of the bottom block, not Y coord.
-                            // Current Gap Size = Height - TopHeight - BottomHeight
-                            let currentGapYStart = p.top;
-                            let currentGapYEnd = height - p.bottom;
-                            let centerY = (currentGapYStart + currentGapYEnd) / 2;
-
-                            // 2. Generate a chaotic gap size using two interfering sine waves
-                            // This ensures the movement is smooth but never repeats efficiently
-                            let waveA = Math.sin(frames * p.chaosSpeedA + p.chaosPhaseA);
-                            let waveB = Math.cos(frames * p.chaosSpeedB + p.chaosPhaseB);
+                            // 1. Calculate the wave (-1 to +1) based on time, unique speed, and unique start point
+                            let wave = Math.sin(frames * p.breathSpeed + p.breathPhase);
                             
-                            // Combine them: Base Gap (170) + Large Slow Wave + Small Fast Wave
-                            let newGapSize = 170 + (waveA * p.chaosAmp) + (waveB * 15);
-
-                            // Safety Limits
-                            if (newGapSize < 90) newGapSize = 90;
-                            if (newGapSize > 260) newGapSize = 260;
-
-                            // 3. Apply the new gap size around the center point
-                            p.top = centerY - (newGapSize / 2);
-                            p.bottom = height - (centerY + (newGapSize / 2));
+                            // 2. Calculate the actual gap size for this frame
+                            // Base gap is 170. It expands/contracts by breathAmp.
+                            // E.g., if Amp is 40, Gap goes from 130px to 210px.
+                            let currentGap = 170 + (wave * p.breathAmp);
                             
-                            // 4. Boundary checks (Don't let pillars leave screen)
-                            if (p.top < 10) { p.top = 10; }
-                            if (p.bottom < 10) { p.bottom = 10; }
+                            // 3. Apply the gap around the fixed Center Y
+                            p.top = p.centerY - (currentGap / 2);
+                            p.bottom = height - (p.centerY + (currentGap / 2));
+                            
+                            // 4. Safety Clamps (Visual polish)
+                            if (p.top < 10) p.top = 10;
+                            if (p.bottom < 10) p.bottom = 10;
                         }
                     }
 
@@ -1339,6 +1335,7 @@ const obstacles = {
     </script>
 </body>
 </html>
+
 
 
 
