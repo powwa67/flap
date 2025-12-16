@@ -730,13 +730,6 @@ const obstacles = {
                     let anomalyDir = Math.random() < 0.5 ? 1 : -1;
                     let anomalySpeed = isAnomaly ? (speedVal * anomalyDir) : 0;
                     
-                    // --- MOVEMENT SETUP ---
-                    // 'moveY' now controls how fast the pipes crush/open.
-                    // We pick a random start direction (opening or closing)
-                    let crushDir = Math.random() < 0.5 ? 1 : -1;
-                    let crushSpeed = 0.8 + Math.random() * 1.2; // Speed of breathing
-                    let moveY = crushDir * crushSpeed;
-                    
                     // --- SPAWN LOGIC ---
                     let spawnType = null;
 
@@ -765,10 +758,16 @@ const obstacles = {
                     this.list.push({
                         x: width, w: 55, top: topH, bottom: height-GAP-topH, 
                         passed: false, 
-                        moveY: forceStatic ? 0 : moveY, 
+                        
+                        // --- UNPREDICTABLE MOVEMENT INIT ---
                         isAnomaly: forceStatic ? false : isAnomaly,     
                         anomalySpeed: forceStatic ? 0 : anomalySpeed, 
-                        anomalyOffset: 0,
+                        
+                        // New Logic: "Target Seeking"
+                        targetGap: 100 + Math.random() * 130, // Random target between tight (100) and wide (230)
+                        crushSpeed: 0.5 + Math.random() * 2.5, // Random speed for this phase
+                        // -----------------------------------
+                        
                         hasBeenHit: false
                     });
                 }
@@ -780,27 +779,40 @@ const obstacles = {
                     if (!timeStopActive) {
                         
                         if (p.isAnomaly) {
-                            // --- ANOMALY LOGIC (Original "Elevator" Movement) ---
-                            // This moves the GAP up and down without changing size
+                            // --- ANOMALY (Elevator Effect) ---
                             p.top += p.anomalySpeed;
                             p.bottom -= p.anomalySpeed; 
                             if(p.top < 40 || p.top > height - GAP - 40) p.anomalySpeed *= -1;
                         } else {
-                            // --- STANDARD PIPE LOGIC (New "Breathing" Movement) ---
-                            // We add moveY to BOTH top and bottom.
-                            // If moveY is positive: Top gets taller, Bottom gets taller -> Gap Shrinks.
-                            // If moveY is negative: Top gets shorter, Bottom gets shorter -> Gap Grows.
-                            p.top += p.moveY;
-                            p.bottom += p.moveY;
-
-                            // Calculate current gap size
+                            // --- STANDARD (Unpredictable Breathing) ---
                             let currentGap = height - p.top - p.bottom;
+                            
+                            // 1. Move towards the target gap size
+                            // If Gap is bigger than Target, Shrink (Positive change to top/bottom)
+                            // If Gap is smaller than Target, Grow (Negative change to top/bottom)
+                            let direction = (currentGap > p.targetGap) ? 1 : -1;
+                            let moveAmount = direction * p.crushSpeed;
 
-                            // Reverse direction if gap gets too small (hard) or too big (easy)
-                            // Base GAP is 170. We let it breathe between ~110 and ~230.
-                            if (currentGap < 110 || currentGap > 230) {
-                                p.moveY *= -1;
+                            p.top += moveAmount;
+                            p.bottom += moveAmount;
+
+                            // 2. Decision Logic: Change Target?
+                            // Condition A: We reached the target (gap is close enough)
+                            // Condition B: Random "Twitch" (1% chance per frame to change mind mid-movement)
+                            if (Math.abs(currentGap - p.targetGap) < 5 || Math.random() < 0.01) {
+                                // Pick a NEW random target
+                                p.targetGap = 90 + Math.random() * 150; // Randomize target again
+                                
+                                // Pick a NEW random speed (Slow crawl or fast snap)
+                                p.crushSpeed = 0.5 + Math.random() * 2.0;
+                                
+                                // Safety clamp: Don't let the gap get impossibly small or huge
+                                if (p.targetGap < 90) p.targetGap = 90;
+                                if (p.targetGap > 240) p.targetGap = 240;
                             }
+                            
+                            // 3. Absolute Safety Clamp (Prevent negative size glitches)
+                            if (currentGap < 80) { p.top -= 2; p.bottom -= 2; p.targetGap = 200; } 
                         }
                     }
 
@@ -1328,6 +1340,7 @@ const obstacles = {
     </script>
 </body>
 </html>
+
 
 
 
