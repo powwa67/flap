@@ -730,36 +730,29 @@ const obstacles = {
                     let anomalyDir = Math.random() < 0.5 ? 1 : -1;
                     let anomalySpeed = isAnomaly ? (speedVal * anomalyDir) : 0;
                     
-                    // --- UPDATED MOVEMENT LOGIC HERE ---
-                    // Old: (Math.random()-0.5)*1.5 (Too slow/subtle)
-                    // New: Ensures a minimum speed of 0.5, max 2.5. Moves much more.
-                    let moveDir = Math.random() < 0.5 ? 1 : -1;
-                    let moveMag = 0.5 + (Math.random() * 2.0); 
-                    let moveY = moveDir * moveMag;
-                    // -----------------------------------
+                    // --- MOVEMENT SETUP ---
+                    // 'moveY' now controls how fast the pipes crush/open.
+                    // We pick a random start direction (opening or closing)
+                    let crushDir = Math.random() < 0.5 ? 1 : -1;
+                    let crushSpeed = 0.8 + Math.random() * 1.2; // Speed of breathing
+                    let moveY = crushDir * crushSpeed;
                     
-                    // --- SPAWN LOGIC START ---
+                    // --- SPAWN LOGIC ---
                     let spawnType = null;
 
-                    // 1. SHIELD (Level 1: Max 2 times total, random chance)
+                    // 1. SHIELD
                     if (!infiniteMode && level1ShieldCount < 2 && Math.random() < 0.1 && !player.hasShield) {
                         spawnType = 'SHIELD';
                         level1ShieldCount++;
-                    }
-                    
-                    // 2. SHIELD (Infinite Mode: Every 25 Pillars)
-                    if (infiniteMode && pipeSpawnCount % 25 === 0 && !player.hasShield) {
+                    } else if (infiniteMode && pipeSpawnCount % 25 === 0 && !player.hasShield) {
                         spawnType = 'SHIELD';
                     }
                     
-                    // 3. CLOCK (Level 1: Score > 30, Max 2 times)
+                    // 2. CLOCK
                     if (!infiniteMode && score >= 30 && level1ClockCount < 2 && Math.random() < 0.15 && !timeStopActive) {
                         spawnType = 'CLOCK';
                         level1ClockCount++;
-                    }
-
-                    // 4. CLOCK (Infinite Mode: Every 30 Pillars)
-                    if (infiniteMode && pipeSpawnCount % 30 === 0 && !timeStopActive) {
+                    } else if (infiniteMode && pipeSpawnCount % 30 === 0 && !timeStopActive) {
                         spawnType = 'CLOCK';
                     }
 
@@ -785,20 +778,29 @@ const obstacles = {
                     
                     // FREEZE HAZARDS IF TIME STOP IS ACTIVE
                     if (!timeStopActive) {
-                        // --- UPDATED LOOP LOGIC ---
-                        p.top += p.moveY; 
-                        p.bottom -= p.moveY; // Important: Move bottom opposite to top to keep Gap constant
                         
-                        // Bounce off the ceiling/floor boundaries
-                        if(p.top < 30 || p.top > height - GAP - 30) {
-                            p.moveY *= -1;
-                        }
-                        // --------------------------
-
-                        if(p.isAnomaly) {
+                        if (p.isAnomaly) {
+                            // --- ANOMALY LOGIC (Original "Elevator" Movement) ---
+                            // This moves the GAP up and down without changing size
                             p.top += p.anomalySpeed;
                             p.bottom -= p.anomalySpeed; 
                             if(p.top < 40 || p.top > height - GAP - 40) p.anomalySpeed *= -1;
+                        } else {
+                            // --- STANDARD PIPE LOGIC (New "Breathing" Movement) ---
+                            // We add moveY to BOTH top and bottom.
+                            // If moveY is positive: Top gets taller, Bottom gets taller -> Gap Shrinks.
+                            // If moveY is negative: Top gets shorter, Bottom gets shorter -> Gap Grows.
+                            p.top += p.moveY;
+                            p.bottom += p.moveY;
+
+                            // Calculate current gap size
+                            let currentGap = height - p.top - p.bottom;
+
+                            // Reverse direction if gap gets too small (hard) or too big (easy)
+                            // Base GAP is 170. We let it breathe between ~110 and ~230.
+                            if (currentGap < 110 || currentGap > 230) {
+                                p.moveY *= -1;
+                            }
                         }
                     }
 
@@ -836,13 +838,9 @@ const obstacles = {
                 }
                 if(this.list.length > 0 && this.list[0].x < -100) this.list.shift();
             },
-            
-            // ... (keep the draw: function part exactly as it is in your original file) ...
+
             draw: function() {
-                // You don't need to change anything in the draw function, 
-                // just paste the draw code from your file here if replacing the whole object.
-                // For brevity, ensure you copy the 'draw' block from your original file.
-                 let era = Math.floor(score / 10) % 3; 
+                let era = Math.floor(score / 10) % 3; 
                 let mainColor = BIOMES[currentBiome].border;
                 if(currentBiome === 5) mainColor = `hsl(${globalHue}, 100%, 60%)`;
                 let pulse = Math.sin(frames * 0.1) * 0.5 + 0.5;
@@ -1330,6 +1328,7 @@ const obstacles = {
     </script>
 </body>
 </html>
+
 
 
 
