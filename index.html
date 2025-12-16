@@ -972,9 +972,12 @@
             }
 
             flashScreen(); SFX.explode();
+            
+            // Visuals
             if(!PERF_MODE) {
                 for(let i=0; i<25; i++) particles.push({type: 'explode', x: player.x, y: player.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1.0, color: '#0ff', size: Math.random()*8+3});
             }
+            
             gameState = 'DIE_ANIM';
             
             deathScoreDisplay.innerText = `SCORE: ${score}`;
@@ -982,75 +985,36 @@
 
             bgFail.style.display = 'block';
             setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
-            setTimeout(() => { deathModal.style.display = 'flex'; }, 800);
-
-            const savedName = localStorage.getItem('powa-username');
-            if (savedName) {
-                document.getElementById('username-input').value = savedName;
-                submitScore(true); // Auto-submit
-            } else {
-                document.getElementById('username-input').disabled = false;
-                document.getElementById('submit-score-btn').disabled = false;
-                document.getElementById('submit-score-btn').innerText = "SUBMIT SCORE";
-                document.getElementById('submit-score-btn').style.background = "linear-gradient(180deg, #00aaff, #0055aa)";
-            }
-        }
-
-        function winGame() {
-            gameState = 'WIN_PAUSE'; 
-            localStorage.setItem('powa-unlocked', 'true');
-            isUnlocked = true;
-
-            MUSIC.pause();
-            SFX.win();
-            flashScreen();
-            bgWin.style.display = 'block';
-            setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
-            winModal.style.display = 'flex';
-            // TRIGGER SERVER FETCH
-            fetchServerKey();
-        }
-
-        window.continueGame = function() {
-            infiniteMode = true;
-            isUnlocked = true; 
-            localStorage.setItem('powa-unlocked', 'true');
             
-            winModal.style.display = 'none';
-            bgWin.style.opacity = '0';
-            setTimeout(() => { bgWin.style.display = 'none'; }, 500);
-
-            progressContainer.style.display = 'none';
-            scoreCounter.style.display = 'block';
-            scoreCounter.innerText = score;
-            
-            // RESET START TIME FOR SPEED CHECK
-            gameStartTime = Date.now();
-
-            // --- COUNTDOWN LOGIC ---
-            let count = 3;
-            const countEl = document.getElementById('countdown');
-            countEl.style.display = 'block';
-            countEl.innerText = count;
-            
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            playTone(400, 'sine', 0.1, 0.1);
-
-            let timer = setInterval(() => {
-                count--;
-                if(count > 0) {
-                    countEl.innerText = count;
-                    playTone(400, 'sine', 0.1, 0.1);
-                } else {
-                    clearInterval(timer);
-                    countEl.style.display = 'none';
-                    player.velocity = -JUMP; 
-                    gameState = 'PLAY';
-                    MUSIC.resume();
-                    playTone(800, 'square', 0.2, 0.1);
+            // --- SAFETY BOX: PREVENT CRASH IF SUBMIT FAILS ---
+            // This ensures the menu ALWAYS opens, even if the server is broken.
+            setTimeout(() => { 
+                deathModal.style.display = 'flex'; 
+                
+                try {
+                    const savedName = localStorage.getItem('powa-username');
+                    if (savedName) {
+                        document.getElementById('username-input').value = savedName;
+                        // Check if submitScore exists before calling
+                        if (typeof window.submitScore === "function") {
+                            window.submitScore(true); 
+                        }
+                    } else {
+                        // Reset button state for manual entry
+                        const btn = document.getElementById('submit-score-btn');
+                        const input = document.getElementById('username-input');
+                        if(btn) {
+                            btn.disabled = false;
+                            btn.innerText = "SUBMIT SCORE";
+                            btn.style.background = "linear-gradient(180deg, #00aaff, #0055aa)";
+                        }
+                        if(input) input.disabled = false;
+                    }
+                } catch(err) {
+                    console.error("Auto-submit failed, but game continues:", err);
                 }
-            }, 1000);
-        };
+            }, 800);
+        }
 
         window.resetLevel = function() {
             deathModal.style.display = 'none';
@@ -1381,6 +1345,7 @@
     </script>
 </body>
 </html>
+
 
 
 
