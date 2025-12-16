@@ -353,99 +353,41 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // --- GAME CONFIG & SERVER SYNC ---
-        // 1. Set variables to wait for Server Data
-        let KEY_ID = "LOADING..."; 
+        // --- GAME CONFIG & VERSION CONTROL ---
+        const KEY_ID = "day_10"; 
         const KEY_WARNING_MODE = "OFF"; 
 
-        // !!! IMPORTANT: YOUR SERVER URL !!!
-        const WORKER_URL = "https://powa-vault.powwa.workers.dev"; 
+        // !!! IMPORTANT: REPLACE THIS WITH YOUR CLOUDFLARE WORKER URL !!!
+        const WORKER_URL = "https://powa-vault.powwa.workers.dev";
 
-        let TARGET_SCORE = 70;  // Make sure this matches your Worker score check!
+        let TARGET_SCORE = 70; 
         let SPEED = 7;     
         let GRAVITY = 0.6;
         let JUMP = 8.5;
         let GAP = 170; 
         let PERF_MODE = false;
+
+        // --- NEW: GAME START TIME FOR ANTI-CHEAT ---
         let gameStartTime = 0;
+
+        // --- STORAGE & PERSISTENCE CHECK ---
+        let highScore = localStorage.getItem('powa-high-score') || 0;
+        let storedKeyId = localStorage.getItem('powa-key-id');
+        let storedUnlock = localStorage.getItem('powa-unlocked');
+        
         let isUnlocked = false;
 
-        // --- NEW: SERVER SYNC STARTUP ---
-        // This function asks the server for the current "Day ID"
-        async function initGameSync() {
-            const listDiv = document.getElementById('leaderboard-list');
-            listDiv.innerHTML = "<div style='text-align:center; color:#ffff00; padding-top:20px; animation:blink 0.5s infinite;'>SYNCING SERVER...</div>";
-
-            try {
-                // 1. Ask Server what "Day" it is (Action: GET_STATUS)
-                const response = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: "GET_STATUS", secret: "POWA_HANDSHAKE_v1" })
-                });
-                
-                const data = await response.json();
-                
-                // 2. Set the Global ID based on Server's Answer
-                // The server sends back a hash like "day_a9b8c7d6" based on your API Key
-                if (data.dayId) {
-                    KEY_ID = data.dayId;
-                    console.log("Synced with Server. Day ID:", KEY_ID);
-                } else {
-                    // Fallback just in case
-                    KEY_ID = "day_" + new Date().toISOString().split('T')[0];
-                }
-                
-                // 3. Check if we need to reset the player's level
-                checkProgressReset();
-                
-                // 4. Load the correct leaderboard
-                switchTab('daily');
-                
-            } catch (err) {
-                console.error("Server Sync Failed", err);
-                // If server is offline, fallback to local date
-                KEY_ID = "day_" + new Date().toISOString().split('T')[0]; 
-                checkProgressReset();
-                switchTab('daily');
+        if(storedKeyId === KEY_ID && storedUnlock === 'true') {
+            isUnlocked = true;
+        } else {
+            if(storedKeyId !== KEY_ID) {
+                localStorage.setItem('powa-key-id', KEY_ID);
+                localStorage.removeItem('powa-unlocked');
             }
+            isUnlocked = false;
         }
-
-        // --- RESET LOGIC ---
-        function checkProgressReset() {
-            let highScore = localStorage.getItem('powa-high-score') || 0;
-            let storedKeyId = localStorage.getItem('powa-key-id');
-            let storedUnlock = localStorage.getItem('powa-unlocked');
-            
-            // IF the Server's Day ID is different from what we saved last time...
-            if (storedKeyId !== KEY_ID) {
-                console.log("New Challenge Detected! Resetting Progress.");
-                localStorage.setItem('powa-key-id', KEY_ID); // Save the new Day ID
-                localStorage.removeItem('powa-unlocked');    // Lock the game again
-                isUnlocked = false;
-            } else {
-                // Same Day = Keep Progress
-                isUnlocked = (storedUnlock === 'true');
-            }
-
-            menuHighScore.innerText = `BEST: ${highScore}`;
-            
-            // Update UI based on locked/unlocked status
-            if (isUnlocked) {
-                infiniteMode = true;
-                progressContainer.style.display = 'none';
-                scoreCounter.style.display = 'block'; 
-                scoreCounter.innerText = "0";
-            } else {
-                infiniteMode = false;
-                progressContainer.style.display = 'flex';
-                scoreCounter.style.display = 'none';
-                updateProgress();
-            }
-        }
-
-        // START THE SYNC IMMEDIATELY
-        initGameSync();
+        
+        menuHighScore.innerText = `BEST: ${highScore}`;
 
         // --- BIOMES DEFINITION ---
         const BIOMES = [
@@ -484,7 +426,6 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        action: "GET_KEY", // <--- ADD THIS LINE
                         score: score, 
                         secret: "POWA_HANDSHAKE_v1",
                         startTime: gameStartTime
@@ -964,58 +905,93 @@
         };
     
         // --- CORE FUNCTIONS ---
-        // --- FIXED DIE FUNCTION: WAIT FOR MODAL ---
-        function die() {
-            // 1. Save High Score locally immediately
+       function die() {
             if(score > highScore) {
                 highScore = score;
                 localStorage.setItem('powa-high-score', highScore);
                 menuHighScore.innerText = `BEST: ${highScore}`;
             }
 
-            // 2. Visual Effects
             flashScreen(); SFX.explode();
             if(!PERF_MODE) {
                 for(let i=0; i<25; i++) particles.push({type: 'explode', x: player.x, y: player.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1.0, color: '#0ff', size: Math.random()*8+3});
             }
-            
-            // 3. Stop the Game Loop
             gameState = 'DIE_ANIM';
             
-            // 4. Update Menu Text
             deathScoreDisplay.innerText = `SCORE: ${score}`;
             deathBestDisplay.innerText = `BEST: ${highScore}`;
 
-            // 5. Show "Fail" GIF
             bgFail.style.display = 'block';
             setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
-            
-            // 6. DELAY MENU OPENING (Prevent Freeze)
-            setTimeout(() => { 
-                // FORCE MENU OPEN FIRST
-                deathModal.style.display = 'flex'; 
-                
-                // THEN try to submit (Silently)
-                const savedName = localStorage.getItem('powa-username');
-                if (savedName) {
-                    document.getElementById('username-input').value = savedName;
-                    // We use .catch() here so if it crashes, it doesn't stop the game
-                    if (typeof window.submitScore === "function") {
-                        window.submitScore(true).catch(e => console.log("Auto-submit error:", e));
-                    }
-                } else {
-                    // Enable manual entry
-                    const btn = document.getElementById('submit-score-btn');
-                    const input = document.getElementById('username-input');
-                    if(btn) {
-                        btn.disabled = false;
-                        btn.innerText = "SUBMIT SCORE";
-                        btn.style.background = "linear-gradient(180deg, #00aaff, #0055aa)";
-                    }
-                    if(input) input.disabled = false;
-                }
-            }, 800);
+            setTimeout(() => { deathModal.style.display = 'flex'; }, 800);
+
+            const savedName = localStorage.getItem('powa-username');
+            if (savedName) {
+                document.getElementById('username-input').value = savedName;
+                submitScore(true); // Auto-submit
+            } else {
+                document.getElementById('username-input').disabled = false;
+                document.getElementById('submit-score-btn').disabled = false;
+                document.getElementById('submit-score-btn').innerText = "SUBMIT SCORE";
+                document.getElementById('submit-score-btn').style.background = "linear-gradient(180deg, #00aaff, #0055aa)";
+            }
         }
+
+        function winGame() {
+            gameState = 'WIN_PAUSE'; 
+            localStorage.setItem('powa-unlocked', 'true');
+            isUnlocked = true;
+
+            MUSIC.pause();
+            SFX.win();
+            flashScreen();
+            bgWin.style.display = 'block';
+            setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
+            winModal.style.display = 'flex';
+            // TRIGGER SERVER FETCH
+            fetchServerKey();
+        }
+
+        window.continueGame = function() {
+            infiniteMode = true;
+            isUnlocked = true; 
+            localStorage.setItem('powa-unlocked', 'true');
+            
+            winModal.style.display = 'none';
+            bgWin.style.opacity = '0';
+            setTimeout(() => { bgWin.style.display = 'none'; }, 500);
+
+            progressContainer.style.display = 'none';
+            scoreCounter.style.display = 'block';
+            scoreCounter.innerText = score;
+            
+            // RESET START TIME FOR SPEED CHECK
+            gameStartTime = Date.now();
+
+            // --- COUNTDOWN LOGIC ---
+            let count = 3;
+            const countEl = document.getElementById('countdown');
+            countEl.style.display = 'block';
+            countEl.innerText = count;
+            
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            playTone(400, 'sine', 0.1, 0.1);
+
+            let timer = setInterval(() => {
+                count--;
+                if(count > 0) {
+                    countEl.innerText = count;
+                    playTone(400, 'sine', 0.1, 0.1);
+                } else {
+                    clearInterval(timer);
+                    countEl.style.display = 'none';
+                    player.velocity = -JUMP; 
+                    gameState = 'PLAY';
+                    MUSIC.resume();
+                    playTone(800, 'square', 0.2, 0.1);
+                }
+            }, 1000);
+        };
 
         window.resetLevel = function() {
             deathModal.style.display = 'none';
@@ -1294,49 +1270,38 @@
             });
         }
 
-        window.submitScore = async function(isAuto = false) {
+        window.submitScore = function(isAuto = false) {
             const nameInput = document.getElementById('username-input');
             const submitBtn = document.getElementById('submit-score-btn');
             let rawName = nameInput.value.toUpperCase().trim();
             const name = rawName.substring(0, 15) || "ANONYMOUS";
             localStorage.setItem('powa-username', name);
 
-            if(score === 0 && !isAuto) { alert("Play first!"); return; }
+            if(score===0 && !isAuto) { alert("Play first!"); return; }
             
-            submitBtn.innerText = isAuto ? "AUTO-SENDING..." : "SENDING...";
+            // SECURITY FIX: FORCE NUMBER TYPE
+            let scoreToSend = parseInt(score, 10);
+            
+            submitBtn.innerText = isAuto ? "AUTO-SENDING..." : "CHECKING...";
             submitBtn.disabled = true; nameInput.disabled = true;
 
-            try {
-                // SEND TO CLOUDFLARE SERVER
-                const response = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: "SUBMIT_SCORE", // Tell server this is a score submission
-                        score: score,
-                        name: name,
-                        secret: "POWA_HANDSHAKE_v1",
-                        startTime: gameStartTime 
-                    })
-                });
-
-                if (response.ok) {
-                    submitBtn.innerText = "SENT!";
-                    submitBtn.style.background = "#333";
-                    // Refresh leaderboard to show new score
-                    setTimeout(() => fetchLeaderboard('daily'), 1000);
-                } else {
-                    submitBtn.innerText = "ERROR";
-                    submitBtn.disabled = false;
-                }
-            } catch (err) {
+            const dailyCollection = `leaderboard_${KEY_ID}`;
+            
+            Promise.all([
+                submitToCollection("leaderboard", name, scoreToSend),   
+                submitToCollection(dailyCollection, name, scoreToSend)
+            ]).then(() => {
+                submitBtn.innerText = "SENT!";
+                submitBtn.style.background = "#333";
+            }).catch((err) => {
                 console.error(err);
-                submitBtn.innerText = "OFFLINE";
+                submitBtn.innerText = "ERROR";
                 submitBtn.disabled = false;
-            }
+            });
         };
 
         initGalaxy(); initParticles(); resetLevel(); requestAnimationFrame(loop);
+        switchTab('daily');
 
         // CHECK WARNING MODE
         if (KEY_WARNING_MODE === "ON") {
@@ -1346,3 +1311,7 @@
     </script>
 </body>
 </html>
+
+
+
+
