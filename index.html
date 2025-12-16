@@ -354,7 +354,8 @@
         resize();
 
         // --- GAME CONFIG & VERSION CONTROL ---
-        const KEY_ID = "day_9"; 
+        // AUTOMATIC DATE MATCHING (Must match Server logic)
+const KEY_ID = "day_" + new Date().toISOString().split('T')[0]; 
         const KEY_WARNING_MODE = "OFF"; 
 
         // !!! IMPORTANT: REPLACE THIS WITH YOUR CLOUDFLARE WORKER URL !!!
@@ -1324,6 +1325,7 @@
     </script>
 </body>
 </html>
+
 
 
 
