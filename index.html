@@ -222,6 +222,23 @@
 
         .key-label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
 
+        /* WIN INPUT STYLES */
+        .win-input-field {
+            background: #000; 
+            border: 2px solid #00ffff; 
+            color: #fff; 
+            padding: 15px; 
+            font-family: 'Russo One', sans-serif; 
+            font-size: 1.2rem; 
+            text-align: center; 
+            text-transform: uppercase; 
+            margin: 15px 0; 
+            width: 80%; 
+            border-radius: 8px; 
+            outline: none;
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+        }
+
         #flash-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; opacity: 0; pointer-events: none;
@@ -280,7 +297,7 @@
             </div>
         </div>
             
-<div id="death-modal" class="modal">
+        <div id="death-modal" class="modal">
             <img src="bruh.png" style="width: 150px; margin-bottom: 15px; border-radius: 8px;">
             
             <div id="death-score-display" style="color:#fff; font-size:1.5rem; margin: 10px 0;">SCORE: 0</div>
@@ -308,12 +325,25 @@
         </div>
 
         <div id="win-modal" class="modal">
-            <h1 style="color:#00ffff; font-size:3rem; text-shadow: 0 0 20px #00ffff;">ACCESS GRANTED</h1>
-            <div class="key-container">
-                <div class="key-label">DAILY API KEY</div>
-                <div id="key-text" class="key-box">Loading...</div>
-                <button class="btn btn-copy" onclick="copyKey('key-text', this)">COPY KEY</button>
-                <button class="btn btn-continue" onclick="continueGame()">CONTINUE PLAYING</button>
+            <div id="win-input-section" style="display:none; width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <h1 style="color:#00ffff; font-size:2.5rem; text-shadow: 0 0 20px #00ffff;">VICTORY</h1>
+                <p style="color:#fff; margin-bottom:15px;">ENTER NAME TO CLAIM REWARD</p>
+                
+                <input type="text" id="win-username-input" class="win-input-field" placeholder="YOUR NAME" maxlength="15">
+                
+                <button class="btn" onclick="submitWinDetails()" style="background: linear-gradient(180deg, #bd00ff, #7700aa);">
+                    CLAIM REWARD
+                </button>
+            </div>
+
+            <div id="win-reward-section" style="display:none; width: 100%; flex-direction: column; align-items: center;">
+                <h1 style="color:#00ffff; font-size:3rem; text-shadow: 0 0 20px #00ffff;">ACCESS GRANTED</h1>
+                <div class="key-container">
+                    <div class="key-label">DAILY API KEY</div>
+                    <div id="key-text" class="key-box">Loading...</div>
+                    <button class="btn btn-copy" onclick="copyKey('key-text', this)">COPY KEY</button>
+                    <button class="btn btn-continue" onclick="continueGame()">CONTINUE PLAYING</button>
+                </div>
             </div>
         </div>
     </div>
@@ -433,7 +463,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        action: "GET_KEY",  // <--- THIS WAS MISSING!
+                        action: "GET_KEY",  
                         score: score, 
                         secret: "POWA_HANDSHAKE_v1",
                         startTime: gameStartTime
@@ -709,7 +739,7 @@
             }
         };
 
-const obstacles = {
+        const obstacles = {
             list: [],
             
             update: function() {
@@ -770,10 +800,7 @@ const obstacles = {
                         breathPhase: Math.random() * Math.PI * 2,
                         breathAmp: 30 + Math.random() * 40,
                         
-                        // New: 40% chance to be a "Sentient Trap"
-                        // These pillars ignore rhythm and crush you when you get close
                         isTrap: !isAnomaly && Math.random() < 0.4, 
-                        // ------------------------------
 
                         hasBeenHit: false
                     });
@@ -804,15 +831,12 @@ const obstacles = {
                                 // If player is approaching (within 300px) and hasn't passed
                                 if (distToPlayer < 300 && distToPlayer > -50) {
                                     // Calculate "Panic Squeeze"
-                                    // The closer you are (300 -> 0), the more we subtract from the gap.
-                                    // We override the sine wave's "open" phase.
                                     let panicFactor = (300 - distToPlayer) * 0.35; 
                                     currentGap -= panicFactor;
                                 }
                             }
 
                             // 3. Absolute Safety Clamp
-                            // Ensure it's technically passable (player is ~32px, gap min 90px)
                             if (currentGap < 90) currentGap = 90;
                             
                             // 4. Apply Gap
@@ -868,8 +892,6 @@ const obstacles = {
                 for(let p of this.list) {
                     let warningColor = p.isAnomaly && (frames % 20 < 10) ? "#ff0000" : mainColor;
                     
-                    // --- VISUAL FEEDBACK FOR TRAPS ---
-                    // If it's a trap and close to player, turn it menacingly bright or reddish
                     let isActiveTrap = p.isTrap && (p.x - player.x < 300) && (p.x - player.x > -50);
                     let trapColor = isActiveTrap ? "#ffaa00" : mainColor; 
                     
@@ -988,12 +1010,48 @@ const obstacles = {
             MUSIC.pause();
             SFX.win();
             flashScreen();
+            
             bgWin.style.display = 'block';
             setTimeout(() => { bgWin.style.opacity = '1'; }, 10);
             winModal.style.display = 'flex';
-            // TRIGGER SERVER FETCH
-            fetchServerKey();
+            
+            const savedName = localStorage.getItem('powa-username');
+            const winInput = document.getElementById('win-input-section');
+            const winReward = document.getElementById('win-reward-section');
+
+            if (savedName) {
+                // NAME EXISTS: AUTO SUBMIT AND SHOW REWARD
+                winInput.style.display = 'none';
+                winReward.style.display = 'flex';
+                submitScore(true);
+                fetchServerKey();
+            } else {
+                // NO NAME: FORCE INPUT FIRST
+                winInput.style.display = 'flex';
+                winReward.style.display = 'none';
+            }
         }
+        
+        // --- NEW FUNCTION: SUBMIT FROM WIN SCREEN ---
+        window.submitWinDetails = function() {
+            const nameInput = document.getElementById('win-username-input');
+            const rawName = nameInput.value.trim();
+            
+            if(!rawName) {
+                nameInput.style.borderColor = "#ff0000";
+                return;
+            }
+            
+            localStorage.setItem('powa-username', rawName);
+            
+            // Switch UI
+            document.getElementById('win-input-section').style.display = 'none';
+            document.getElementById('win-reward-section').style.display = 'flex';
+            
+            // Submit and Fetch
+            submitScore(true);
+            fetchServerKey();
+        };
 
         window.continueGame = function() {
             infiniteMode = true;
@@ -1222,6 +1280,7 @@ const obstacles = {
             if(e.type === 'keydown' && e.code === 'Space') e.preventDefault();
             if(e.target.id === 'perf-btn') return;
             if(e.target.closest('#leaderboard')) return;
+            if(e.target.closest('.win-input-field')) return; // Allow typing name
 
             if(gameState === 'WIN_PAUSE') return;
             if(gameState === 'START') startGame();
@@ -1314,19 +1373,29 @@ const obstacles = {
         }
 
         window.submitScore = function(isAuto = false) {
-            const nameInput = document.getElementById('username-input');
+            // Priority: Local Storage (for Auto/Win flow) -> Input Field (for manual Death flow)
+            let storedName = localStorage.getItem('powa-username');
+            let rawName = storedName || "";
+            
+            const nameInput = document.getElementById('username-input'); // The one in death modal
             const submitBtn = document.getElementById('submit-score-btn');
-            let rawName = nameInput.value.toUpperCase().trim();
-            const name = rawName.substring(0, 15) || "ANONYMOUS";
+
+            if (!isAuto && nameInput) {
+                rawName = nameInput.value;
+            }
+
+            const name = rawName.toUpperCase().trim().substring(0, 15) || "ANONYMOUS";
             localStorage.setItem('powa-username', name);
 
             if(score===0 && !isAuto) { alert("Play first!"); return; }
             
-            // SECURITY FIX: FORCE NUMBER TYPE
             let scoreToSend = parseInt(score, 10);
             
-            submitBtn.innerText = isAuto ? "AUTO-SENDING..." : "CHECKING...";
-            submitBtn.disabled = true; nameInput.disabled = true;
+            if(submitBtn) {
+                submitBtn.innerText = isAuto ? "AUTO-SENDING..." : "CHECKING...";
+                submitBtn.disabled = true; 
+                if(nameInput) nameInput.disabled = true;
+            }
 
             const dailyCollection = `leaderboard_${KEY_ID}`;
             
@@ -1334,12 +1403,16 @@ const obstacles = {
                 submitToCollection("leaderboard", name, scoreToSend),   
                 submitToCollection(dailyCollection, name, scoreToSend)
             ]).then(() => {
-                submitBtn.innerText = "SENT!";
-                submitBtn.style.background = "#333";
+                if(submitBtn) {
+                    submitBtn.innerText = "SENT!";
+                    submitBtn.style.background = "#333";
+                }
             }).catch((err) => {
                 console.error(err);
-                submitBtn.innerText = "ERROR";
-                submitBtn.disabled = false;
+                if(submitBtn) {
+                    submitBtn.innerText = "ERROR";
+                    submitBtn.disabled = false;
+                }
             });
         };
 
@@ -1354,29 +1427,3 @@ const obstacles = {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
