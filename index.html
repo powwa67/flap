@@ -313,9 +313,9 @@
                 SUBMIT SCORE
             </button>
 
-            <p style="color:#aaa; font-size:0.9rem; margin-top:10px; max-width: 90%; line-height: 1.4; text-align: center;">
-                played like shit just like entire story of jjk lmao
-            </p>
+            <p id="death-msg" style="color:#aaa; font-size:0.9rem; margin-top:10px; max-width: 90%; line-height: 1.4; text-align: center;">
+    played like shit just like entire story of jjk lmao
+</p>
 
             <div style="width: 200px; height: 4px; background: #333; margin: 20px 0;"></div>
             
@@ -971,36 +971,66 @@
     
         // --- CORE FUNCTIONS ---
        function die() {
-            if(score > highScore) {
-                highScore = score;
-                localStorage.setItem('powa-high-score', highScore);
-                menuHighScore.innerText = `BEST: ${highScore}`;
-            }
+    // 1. Update High Score if needed
+    if(score > highScore) {
+        highScore = score;
+        localStorage.setItem('powa-high-score', highScore);
+        menuHighScore.innerText = `BEST: ${highScore}`;
+    }
 
-            flashScreen(); SFX.explode();
-            if(!PERF_MODE) {
-                for(let i=0; i<25; i++) particles.push({type: 'explode', x: player.x, y: player.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1.0, color: '#0ff', size: Math.random()*8+3});
-            }
-            gameState = 'DIE_ANIM';
-            
-            deathScoreDisplay.innerText = `SCORE: ${score}`;
-            deathBestDisplay.innerText = `BEST: ${highScore}`;
+    // 2. Explosion FX
+    flashScreen(); SFX.explode();
+    if(!PERF_MODE) {
+        for(let i=0; i<25; i++) particles.push({type: 'explode', x: player.x, y: player.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1.0, color: '#0ff', size: Math.random()*8+3});
+    }
+    
+    // 3. Set State & Update Text
+    gameState = 'DIE_ANIM';
+    deathScoreDisplay.innerText = `SCORE: ${score}`;
+    deathBestDisplay.innerText = `BEST: ${highScore}`;
 
-            bgFail.style.display = 'block';
-            setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
-            setTimeout(() => { deathModal.style.display = 'flex'; }, 800);
+    // --- NEW: DYNAMIC DEATH MESSAGES (HIGHEST FIRST) ---
+    const msgElement = document.getElementById('death-msg');
+    
+    if (score > 500) {
+        msgElement.innerText = "TOUCH GRASS IMMEDIATELY. YOU ARE TOO POWERFUL."; 
+        msgElement.style.color = "#ff0000"; // Red
+        msgElement.style.textShadow = "0 0 10px #ff0000";
+    }
+    else if (score > 250) {
+        msgElement.innerText = "OKAY, YOU'RE ACTUALLY INSANE AT THIS."; 
+        msgElement.style.color = "#bd00ff"; // Purple
+    } 
+    else if (score > 100) {
+        msgElement.innerText = "Okayyy.. damn, good run"; 
+        msgElement.style.color = "#00ff00"; // Green
+    } 
+    else if (score > 70) {
+        msgElement.innerText = "Respectable run. I'm proud of you";
+        msgElement.style.color = "#00ffff"; // Cyan
+    } 
+    else {
+        // Default message (Low score)
+        msgElement.innerText = "played like shit just like entire story of jjk lmao";
+        msgElement.style.color = "#aaa";
+    }
+    // ---------------------------------------------------
 
-            const savedName = localStorage.getItem('powa-username');
-            if (savedName) {
-                document.getElementById('username-input').value = savedName;
-                submitScore(true); // Auto-submit
-            } else {
-                document.getElementById('username-input').disabled = false;
-                document.getElementById('submit-score-btn').disabled = false;
-                document.getElementById('submit-score-btn').innerText = "SUBMIT SCORE";
-                document.getElementById('submit-score-btn').style.background = "linear-gradient(180deg, #00aaff, #0055aa)";
-            }
-        }
+    bgFail.style.display = 'block';
+    setTimeout(() => { bgFail.style.opacity = '1'; }, 10);
+    setTimeout(() => { deathModal.style.display = 'flex'; }, 800);
+
+    const savedName = localStorage.getItem('powa-username');
+    if (savedName) {
+        document.getElementById('username-input').value = savedName;
+        submitScore(true); 
+    } else {
+        document.getElementById('username-input').disabled = false;
+        document.getElementById('submit-score-btn').disabled = false;
+        document.getElementById('submit-score-btn').innerText = "SUBMIT SCORE";
+        document.getElementById('submit-score-btn').style.background = "linear-gradient(180deg, #00aaff, #0055aa)";
+    }
+}
 
         function winGame() {
             gameState = 'WIN_PAUSE'; 
@@ -1427,6 +1457,7 @@
     </script>
 </body>
 </html>
+
 
 
 
