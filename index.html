@@ -795,6 +795,7 @@
                     if(topH < minH) topH = minH + 20; if(topH > maxH) topH = maxH - 20;
                     
                     let isAnomaly = Math.random() < 0.2;
+                    // Standard anomaly speed is 2, but we keep 0 for normal pipes
                     let anomalySpeed = isAnomaly ? (2 * (Math.random()<0.5?1:-1)) : 0;
                     let centerY = topH + (GAP / 2);
 
@@ -810,7 +811,6 @@
                         spawnType = 'CLOCK';
                     }
                     
-                    // OPEN AIR MYSTERY BOX LOGIC
                     if (!spawnType && !timeStopActive && Math.random() < 0.15) {
                         items.push({ 
                             x: width + 100, 
@@ -842,10 +842,26 @@
                     p.x -= SPEED;
                     
                     if (!timeStopActive) {
-                        if (p.isAnomaly) {
+                        // --- FIX START: ORANGE MODE PHYSICS LOGIC ---
+                        
+                        // 1. If Orange Mode is ON, force normal pipes to move like anomalies
+                        if (orangeModeActive && p.anomalySpeed === 0) {
+                            // Assign a random speed (3 is faster than normal anomaly)
+                            p.anomalySpeed = (Math.random() < 0.5 ? 1 : -1) * 3;
+                        }
+                        
+                        // 2. If Orange Mode ended, stop the forced movement for non-anomalies
+                        if (!orangeModeActive && !p.isAnomaly && p.anomalySpeed !== 0) {
+                            p.anomalySpeed = 0;
+                        }
+
+                        // 3. Apply movement if it is an Anomaly OR Orange Mode is active
+                        if (p.isAnomaly || orangeModeActive) {
                              p.top += p.anomalySpeed; p.bottom -= p.anomalySpeed; 
+                             // Bounce logic
                              if(p.top < 40 || p.top > height - GAP - 40) p.anomalySpeed *= -1;
                         } else {
+                            // Standard breathing logic
                             let wave = Math.sin(frames * p.breathSpeed + p.breathPhase);
                             let currentGap = GAP + (wave * p.breathAmp * 0.5); 
                             
@@ -861,6 +877,7 @@
                             p.top = p.centerY - (currentGap / 2);
                             p.bottom = height - (p.centerY + (currentGap / 2));
                         }
+                        // --- FIX END ---
                     }
 
                     let pad = 8; 
@@ -896,7 +913,8 @@
                 }
                 if(this.list.length > 0 && this.list[0].x < -100) this.list.shift();
             },
-
+            
+            // ... (keep the draw function as it was) ...
             draw: function() {
                 let era = Math.floor(score / 10) % 2; 
                 
@@ -906,7 +924,6 @@
                     if (p.isTrap) activeColor = "#ffaa00"; 
                     if (p.hasBeenHit) activeColor = "#555";
                     
-                    // --- ORANGE MODE OVERRIDE ---
                     if (orangeModeActive && !p.hasBeenHit) activeColor = "#ffaa00";
 
                     if (era === 0) {
@@ -959,7 +976,6 @@
                             ctx.fillRect(p.x - 5, height - p.bottom, p.w + 10, 10);
                         }
                         
-                        // IF TRAP OR ANOMALY OR ORANGE MODE
                         if (p.isTrap || p.isAnomaly || orangeModeActive) {
                              ctx.lineWidth = 3; ctx.strokeStyle = activeColor;
                              ctx.strokeRect(p.x, -2, p.w, p.top+2);
@@ -1430,6 +1446,7 @@
     </script>
 </body>
 </html>
+
 
 
 
