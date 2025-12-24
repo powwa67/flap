@@ -392,7 +392,7 @@
         let BASE_GAP = 170;
         let GRAVITY = 0.6;
         let JUMP = 8.5;
-        let difficultyOffset = 0; // NEW: Reset curve for infinite mode
+        let difficultyOffset = 0; 
         
         let PERF_MODE = false;
 
@@ -794,14 +794,17 @@
         const obstacles = {
             list: [],
             update: function() {
-                // 1. REBALANCED DIFFICULTY CURVE (UPDATED: MAX 8, RESET on infinite)
-                // Speed increases with score but strictly caps at 8 (was 10).
-                // Use (score - difficultyOffset) so continuing players restart speed curve.
+                // --- SMART SPEED LOGIC ---
+                // 1. Calculate Score minus the starting offset (so infinite mode starts slow)
                 let effectiveScore = score - difficultyOffset;
-                currentSpeed = Math.min(8, BASE_SPEED + (effectiveScore * 0.06));
+
+                // 2. Set Max Speed: 10 for normal game, 8 for infinite
+                let speedLimit = infiniteMode ? 8 : 10; 
+                
+                // 3. Apply the speed with the limit
+                currentSpeed = Math.min(speedLimit, BASE_SPEED + (effectiveScore * 0.06));
                 
                 // Gap decreases, but hard-capped at 120px to prevent "Impossible Squeeze"
-                // This preserves inconsistency of placement but stops the gap from shrinking forever.
                 let dynamicGap = Math.max(120, BASE_GAP - (score * 1.2));
                 
                 // Adjust spawn rate
