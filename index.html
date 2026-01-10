@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POWA!!!!!</title>
+    <title>POWA-SHINOBI: OVERRIDE</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Russo+One&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -837,17 +837,44 @@
                 ctx.fillStyle = "#ff00ff";
                 ctx.fillRect(-5, -5, 10, 10);
                 
-                // Headband (Physics based on velocity)
+                // SCARF / HEADBAND (Fixed Flow)
+                // We use quadratic curves here to ensure it looks like flowing fabric, not a stick
                 ctx.save();
-                ctx.rotate(-this.rotation*Math.PI/180); // Counter rotate to keep headband flowing back
-                ctx.fillStyle = "#ff00ff";
+                // Rotate back so the scarf always flows left regardless of player spin
+                ctx.rotate(-this.rotation * Math.PI / 180);
+
+                let anchorX = -this.size/2 + 4;
+                let anchorY = -this.size/2 + 4;
+                
+                // Make it wave based on frame count
+                let wave = Math.sin(frames * 0.3) * 8; 
+                let drag = this.velocity * 1.5; // Reacts to falling/jumping
+                let len = 45; 
+
+                ctx.lineCap = 'round';
+                
+                // Ribbon 1 (Magenta)
                 ctx.beginPath();
-                let tailY = -this.velocity * 2;
-                ctx.moveTo(-10, -15);
-                ctx.lineTo(-50, -15 + tailY); // Tail end moves up/down with velocity
-                ctx.lineTo(-50, -5 + tailY);
-                ctx.lineTo(-10, -5);
-                ctx.fill();
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#ff00ff";
+                ctx.moveTo(anchorX, anchorY);
+                ctx.quadraticCurveTo(
+                    anchorX - len/2, anchorY + wave + drag, 
+                    anchorX - len, anchorY + (drag * 1.2)
+                );
+                ctx.stroke();
+
+                // Ribbon 2 (Cyan - shorter)
+                ctx.beginPath();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "#00ffff";
+                ctx.moveTo(anchorX, anchorY + 6); 
+                ctx.quadraticCurveTo(
+                    anchorX - (len/2), anchorY + 6 + wave + drag,
+                    anchorX - (len * 0.8), anchorY + 6 + (drag * 1.2)
+                );
+                ctx.stroke();
+
                 ctx.restore();
 
                 // SHIELD DRAWING (Hexagon Forcefield)
