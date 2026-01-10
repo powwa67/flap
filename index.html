@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POWA-SHINOBI: OVERRIDE</title>
+    <title>POWA!!!!!</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Russo+One&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -264,7 +264,7 @@
 
             <div id="main-menu">
                 <h1 id="title" class="glitch-anim">SYSTEM<br>OVERRIDE</h1>
-                <div id="menu-high-score" class="high-score-label">MAX SYNC: 0</div>
+                <div id="menu-high-score" class="high-score-label">BEST: 0</div>
                 
                 <div id="leaderboard">
                     <div id="tab-container">
@@ -292,8 +292,8 @@
         <div id="death-modal" class="modal">
             <h1 style="color: #ff0000; font-family: 'Orbitron'; font-style: italic; font-size: 3rem; text-shadow: 2px 2px #fff;">CRITICAL FAIL</h1>
             
-            <div id="death-score-display" style="color:#fff; font-size:1.5rem; margin: 10px 0; font-family:'Orbitron';">SYNC: 0%</div>
-            <div id="death-best-display" style="color:#00ffff; font-size:1.2rem;">MAX: 0%</div>
+            <div id="death-score-display" style="color:#fff; font-size:1.5rem; margin: 10px 0; font-family:'Orbitron';">SCORE: 0</div>
+            <div id="death-best-display" style="color:#00ffff; font-size:1.2rem;">BEST: 0</div>
             
             <input type="text" id="username-input" placeholder="CODENAME" maxlength="15" 
                    style="background: #000; border: 1px solid #00ff00; color: #fff; padding: 10px; 
@@ -440,7 +440,7 @@
             isUnlocked = false;
         }
         
-        menuHighScore.innerText = `MAX SYNC: ${highScore}`;
+        menuHighScore.innerText = `BEST: ${highScore}`;
 
         // --- CYBER BIOMES ---
         const BIOMES = [
@@ -1030,13 +1030,14 @@
             if(score > highScore) {
                 highScore = score;
                 localStorage.setItem('powa-high-score', highScore);
-                menuHighScore.innerText = `MAX SYNC: ${highScore}`;
+                menuHighScore.innerText = `BEST: ${highScore}`;
             }
 
             flashScreen(); SFX.explode();
             gameState = 'DIE_ANIM';
-            deathScoreDisplay.innerText = `SYNC: ${score}%`;
-            deathBestDisplay.innerText = `MAX: ${highScore}%`;
+            // RESTORED NUMERICAL SCORE DISPLAY
+            deathScoreDisplay.innerText = `SCORE: ${score}`;
+            deathBestDisplay.innerText = `BEST: ${highScore}`;
 
             const msgElement = document.getElementById('death-msg');
             if (score > 500) msgElement.innerText = "YOU ARE THE ONE."; 
