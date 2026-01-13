@@ -417,8 +417,8 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // --- GAME CONFIG ---
-        const KEY_ID = "day_30"; // Updated ID for new theme
+        // --- GAME CONFIG (UPDATED: RESTORED REAL CONNECTION) ---
+        const KEY_ID = "day_30"; 
         const KEY_WARNING_MODE = "OFF"; 
         const WORKER_URL = "https://powa-vault.powwa.workers.dev"; 
 
@@ -426,8 +426,8 @@
         
         let BASE_SPEED = 7;
         let currentSpeed = 7;
-        let BASE_GAP = 180; // Slightly wider for the new physics feel
-        let GRAVITY = 0.55; // Floaty gravity
+        let BASE_GAP = 180; 
+        let GRAVITY = 0.55; 
         let JUMP = 8.0;
         let difficultyOffset = 0; 
         
@@ -463,17 +463,11 @@
         menuHighScore.innerText = `BEST: ${highScore}`;
 
         // --- VAPORWAVE BIOMES ---
-        // Replacing Christmas colors with Synthwave/Vaporwave palettes
         const BIOMES = [
-            // 1. Midnight City (Purple/Dark Blue)
             { bgTop: '#0f0c29', bgBot: '#302b63', sun: '#ff00ff', grid: '#ff00ff', star: '#00ffff', border: '#ff00ff' }, 
-            // 2. Sunset Strip (Orange/Red)
             { bgTop: '#2b1055', bgBot: '#7597de', sun: '#ffcc00', grid: '#ff00cc', star: '#ffffff', border: '#ffcc00' }, 
-            // 3. Matrix Void (Green/Black)
             { bgTop: '#000000', bgBot: '#001100', sun: '#00ff00', grid: '#008800', star: '#00ff00', border: '#00ff00' }, 
-            // 4. Cotton Candy (Pink/Cyan)
             { bgTop: '#ff9a9e', bgBot: '#fad0c4', sun: '#ffffff', grid: '#ffffff', star: '#fff', border: '#00ffff' }, 
-            // 5. Deep Space (Black/Nebula)
             { bgTop: '#000000', bgBot: '#111111', sun: 'rainbow', grid: 'rainbow', star: 'rainbow', border: '#fff' }
         ];
 
@@ -491,56 +485,125 @@
             return `week_${d.getUTCFullYear()}_${weekNo}`;
         }
 
+        // --- RESTORED REAL CHEAT CHECK ---
         async function checkGlobalCheatStatus() {
             if(isCheatActive) return; 
+            
             try {
-                // Mock check to save API calls in demo, normally this hits the worker
-                // Just enabling button for interaction
-                cheatBtn.innerText = "INIT HACK";
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: "CHECK_CHEAT_STATUS"
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.exhausted) {
+                    cheatBtn.classList.add('exhausted');
+                    cheatBtn.innerText = "EXHAUSTED";
+                    cheatBtn.disabled = false;
+                } else {
+                    cheatBtn.innerText = "INIT HACK";
+                    cheatBtn.disabled = false;
+                }
+            } catch(e) {
+                console.log("Status check failed");
+                cheatBtn.innerText = "INIT HACK"; 
                 cheatBtn.disabled = false;
-            } catch(e) {}
+            }
         }
 
+        // --- RESTORED REAL CHEAT CLAIM ---
         async function claimCheat(e) {
             e.stopPropagation();
-            if(cheatBtn.classList.contains('exhausted')) return;
+            if(cheatBtn.classList.contains('exhausted')) {
+                alert("HACK EXHAUSTED");
+                return;
+            }
             if(isCheatActive) return; 
 
-            const code = prompt("rueera:");
+            const code = prompt("OVERRIDE CODE:");
             if(!code) return;
 
             cheatBtn.innerText = "DECRYPTING...";
             
-            // Simulating cheat for the aesthetic update
-            setTimeout(() => {
-                if (code.toLowerCase() === "vapor" || code.length > 0) {
-                     isCheatActive = true;
-                     localStorage.setItem('powa-cheat-date', new Date().toDateString());
-                     cheatBtn.innerText = "HACK ACTIVE";
-                     cheatBtn.classList.add('active-cheat');
-                     resetLevel(); 
-                     alert("SYSTEM BYPASSED. +10 START.");
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: "CLAIM_CHEAT",  
+                        cheatCode: code
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    isCheatActive = true;
+                    localStorage.setItem('powa-cheat-date', new Date().toDateString());
+                    
+                    cheatBtn.innerText = "HACK ACTIVE";
+                    cheatBtn.classList.add('active-cheat');
+                    
+                    resetLevel(); 
+                    alert("SYSTEM BYPASSED. +10 SCORE START!");
+                } else if (data.error === "FULL") {
+                    cheatBtn.classList.add('exhausted');
+                    cheatBtn.innerText = "EXHAUSTED";
+                    alert("TOO LATE! 5 PLAYERS ALREADY CLAIMED IT.");
                 } else {
                     cheatBtn.innerText = "INIT HACK";
                     alert("ACCESS DENIED");
                 }
-            }, 1000);
+            } catch (error) {
+                console.error(error);
+                cheatBtn.innerText = "ERROR";
+            }
         }
 
+        // --- RESTORED REAL KEY FETCH ---
         async function fetchServerKey() {
             const keyTextBox = document.getElementById('key-text');
+            if (gameStartTime === 0 || score === 0) {
+                 keyTextBox.innerText = "ACCESS DENIED";
+                 keyTextBox.style.color = "#ff4444";
+                 return;
+            }
             keyTextBox.innerText = "DECRYPTING NODE...";
             keyTextBox.style.color = "#ffff00";
-            
-            // Simulation for vibe
-            setTimeout(() => {
-                keyTextBox.innerText = "AST_RAL_KEY_" + Math.floor(Math.random()*9999);
-                keyTextBox.style.color = "#00ff00";
-            }, 1500);
+            keyTextBox.style.animation = "blink 0.5s infinite";
+
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: "GET_KEY",  
+                        score: score, 
+                        secret: "POWA_HANDSHAKE_v1",
+                        startTime: gameStartTime
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.key) {
+                    keyTextBox.innerText = data.key;
+                    keyTextBox.style.color = "#00ff00"; 
+                    keyTextBox.style.animation = "none";
+                } else {
+                    keyTextBox.innerText = data.error || "CONNECTION LOST";
+                    keyTextBox.style.color = "#ff0000";
+                }
+            } catch (error) {
+                console.error(error);
+                keyTextBox.innerText = "SERVER ERROR";
+                keyTextBox.style.color = "#ff0000";
+            }
         }
 
-        // --- AUDIO ---
-        // Using oscillator but tweaking for more "Synth" sounds
         function playTone(freq, type, duration, vol=0.1, delay=0) {
             try {
                 if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
@@ -549,7 +612,6 @@
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
                 
-                // Attack/Decay envelope for synth feel
                 gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
                 gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + delay + 0.05);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
@@ -562,13 +624,12 @@
 
         const SFX = {
             jump: () => {
-                // Laser-like jump sound
                 playTone(400, 'sawtooth', 0.2, 0.05); 
                 playTone(600, 'square', 0.2, 0.03, 0.05);
             },
             score: () => {
                 playTone(1200, 'sine', 0.3, 0.05);
-                playTone(1800, 'sine', 0.3, 0.03, 0.1); // Echo
+                playTone(1800, 'sine', 0.3, 0.03, 0.1); 
             },
             shieldUp: () => { playTone(300, 'square', 0.3, 0.05); playTone(600, 'square', 0.3, 0.05, 0.1); },
             shieldBreak: () => { playTone(100, 'sawtooth', 0.4, 0.1); },
@@ -595,12 +656,10 @@
         };
 
         const MUSIC = {
-            // Placeholder for user interaction logic
             play: () => { if(audioCtx.state === 'suspended') audioCtx.resume(); },
             stop: () => {}, resume: () => {}
         };
 
-        // --- STATE & ASSETS ---
         let frames = 0;
         let score = 0;
         let pipeSpawnCount = 0; 
@@ -653,8 +712,6 @@
         let timeStopTimer = 0;
         let orangeModeActive = false;
         let orangeModeTimer = 0;
-        let level1ShieldCount = 0;
-        let level1ClockCount = 0;
 
         function triggerOrangeMode() {
             if(orangeModeActive) return;
@@ -677,7 +734,7 @@
         }
 
         function switchBiome() {
-            let index = Math.floor(score / 10); // Slower biome change
+            let index = Math.floor(score / 10); 
             if(index >= BIOMES.length) index = BIOMES.length - 1;
             
             if(index !== currentBiome) {
@@ -689,7 +746,6 @@
             }
         }
 
-        // --- VAPORWAVE BACKGROUND SYSTEM ---
         function initVoid() {
             if(PERF_MODE) return;
             stars = []; 
@@ -706,7 +762,7 @@
         function updateVoid() {
             if(PERF_MODE) return;
             for(let s of stars) { 
-                s.y += s.speed; // Moving down like space travel
+                s.y += s.speed; 
                 if(s.y > height) { s.y = -5; s.x = Math.random() * width; }
             }
         }
@@ -720,12 +776,10 @@
                 return;
             }
 
-            // Gradient Sky
             let grad=ctx.createLinearGradient(0,0,0,height); 
             grad.addColorStop(0, biome.bgTop); grad.addColorStop(1, biome.bgBot); 
             ctx.fillStyle=grad; ctx.fillRect(0,0,width,height);
 
-            // Retro Sun
             ctx.save();
             ctx.shadowBlur = 40; ctx.shadowColor = biome.sun === 'rainbow' ? `hsl(${globalHue}, 100%, 50%)` : biome.sun;
             ctx.fillStyle = biome.sun === 'rainbow' ? `hsl(${globalHue}, 100%, 50%)` : biome.sun;
@@ -737,35 +791,30 @@
             }
             ctx.restore();
 
-            // Moving Grid Floor (Perspective)
             ctx.save();
             ctx.strokeStyle = biome.grid === 'rainbow' ? `hsla(${globalHue}, 100%, 50%, 0.4)` : biome.grid;
             ctx.lineWidth = 2;
             ctx.globalAlpha = 0.4;
             
-            // Horizontal lines moving down
             let gridSpeed = (frames * 2) % 40;
             for(let i=0; i<height/2; i+=40) {
                 let y = height/2 + i + gridSpeed;
                 if (y > height) continue;
-                // Perspective logic: lines get further apart? simple linear for now
                 ctx.beginPath();
                 ctx.moveTo(0, y); ctx.lineTo(width, y);
                 ctx.stroke();
             }
             
-            // Vertical lines (Vanishing point)
             let centerX = width/2;
             let vanishY = height * 0.3;
             for(let i=-600; i<width+600; i+=80) {
                 ctx.beginPath();
                 ctx.moveTo(centerX, vanishY);
-                ctx.lineTo(i + (bgOffset*2), height); // Parallax on grid
+                ctx.lineTo(i + (bgOffset*2), height); 
                 ctx.stroke();
             }
             ctx.restore();
 
-            // Stars
             ctx.fillStyle = "#fff";
             for(let s of stars) { 
                 ctx.globalAlpha = Math.random()*0.5 + 0.5;
@@ -774,7 +823,6 @@
             ctx.globalAlpha=1;
         }
 
-        // --- GAME OBJECTS ---
         const player = {
             x: 60, y: 200, size: 30, velocity: 0, rotation: 0,
             shieldCount: 0, 
@@ -790,7 +838,6 @@
                 if(gameState === 'PLAY') this.rotation += 4; 
             },
             draw: function() {
-                // Draw Trail
                 for(let t of trail) {
                     ctx.save(); ctx.translate(t.x+this.size/2, t.y+this.size/2); ctx.rotate(t.rot*Math.PI/180);
                     ctx.fillStyle = t.color; ctx.globalAlpha = t.alpha * 0.4;
@@ -805,7 +852,6 @@
 
                 if(!PERF_MODE) { ctx.shadowBlur=20; ctx.shadowColor=`#00ffff`; }
                 
-                // Draw Geometric Player (Prism/Triangle)
                 ctx.fillStyle = "#fff";
                 ctx.beginPath();
                 ctx.moveTo(0, -this.size/2 - 5);
@@ -814,13 +860,11 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                // Inner Eye/Detail
                 ctx.fillStyle = "#000";
                 ctx.beginPath();
                 ctx.arc(0, 5, 5, 0, Math.PI*2);
                 ctx.fill();
 
-                // Shield
                 if(this.shieldCount > 0) {
                     ctx.beginPath();
                     ctx.lineWidth = 2;
@@ -836,7 +880,6 @@
         const obstacles = {
             list: [],
             update: function() {
-                // Difficulty
                 let effectiveScore = score - difficultyOffset;
                 let speedLimit = infiniteMode ? 9 : 11; 
                 currentSpeed = Math.min(speedLimit, BASE_SPEED + (effectiveScore * 0.08));
@@ -865,7 +908,7 @@
                     if (spawnType) items.push({ x: width + 20, y: topH + (dynamicGap / 2), type: spawnType, taken: false });
                     
                     this.list.push({
-                        x: width, w: 50, // Thinner columns
+                        x: width, w: 50, 
                         top: topH, 
                         bottom: height-dynamicGap-topH, 
                         originalTop: topH, 
@@ -899,7 +942,6 @@
                         }
                     }
 
-                    // Collision
                     if (!p.hasBeenHit) {
                         let hitRadius = (player.size / 2) - 4; 
                         let playerCx = player.x + (player.size / 2);
@@ -933,35 +975,29 @@
             
             draw: function() {
                 for(let p of this.list) {
-                    let colColor = p.isAnomaly ? "#ff00ff" : (orangeModeActive ? "#ff0000" : "#d8d8ff"); // Marble or Glitch
+                    let colColor = p.isAnomaly ? "#ff00ff" : (orangeModeActive ? "#ff0000" : "#d8d8ff"); 
                     if(p.hasBeenHit) colColor = "#555";
                     
-                    // Draw Marble Columns
                     ctx.fillStyle = colColor;
                     
-                    // Top Column
                     ctx.fillRect(p.x, 0, p.w, p.top);
-                    // Bottom Column
                     ctx.fillRect(p.x, height - p.bottom, p.w, p.bottom);
                     
                     if(!PERF_MODE) {
-                        // Fluting (Vertical Lines)
                         ctx.fillStyle = "rgba(0,0,0,0.3)";
                         for(let i=10; i<p.w; i+=10) {
                             ctx.fillRect(p.x + i, 0, 2, p.top);
                             ctx.fillRect(p.x + i, height - p.bottom, 2, p.bottom);
                         }
                         
-                        // Capital/Base styling
                         ctx.fillStyle = "#fff";
-                        ctx.fillRect(p.x - 5, p.top - 20, p.w + 10, 20); // Top Capital
-                        ctx.fillRect(p.x - 5, height - p.bottom, p.w + 10, 20); // Bottom Base
+                        ctx.fillRect(p.x - 5, p.top - 20, p.w + 10, 20); 
+                        ctx.fillRect(p.x - 5, height - p.bottom, p.w + 10, 20); 
                     }
                 }
             }
         };
     
-        // --- CORE FUNCTIONS ---
         function die() {
             if(score > highScore) {
                 highScore = score;
@@ -1177,7 +1213,6 @@
 
                 drawVoid();
                 
-                // Draw floating texts
                 for(let f of floatTexts) { 
                     ctx.save(); 
                     ctx.font = "bold 16px 'Syncopate'";
@@ -1215,7 +1250,6 @@
         function initParticles() {
             if(PERF_MODE) return;
             particles = []; 
-            // Glitch particles
             for(let i=0; i<20; i++) particles.push({x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5), vy: (Math.random()-0.5), life: 1, size: 2, color: "#00ffff"});
         }
 
@@ -1226,7 +1260,6 @@
             if(gameState === 'START') startGame();
             else if(gameState === 'PLAY') {
                 player.velocity = -JUMP; SFX.jump();
-                // Particle burst
                 if(!PERF_MODE) for(let i=0; i<5; i++) particles.push({x: player.x, y: player.y, vx: (Math.random()-0.5)*5, vy: Math.random()*5, life: 0.5, size: 2, color: '#fff'});
             }
         }
@@ -1235,7 +1268,6 @@
         window.addEventListener('mousedown', handleInput);
         window.addEventListener('touchstart', handleInput, {passive: false});
 
-        // --- DATABASE MOCK (Keep existing logic roughly same, just style updates) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCTnLXpYRMw8pxaBS1cIqeeGqtD7A1Mtow",
             authDomain: "powa-2f1bc.firebaseapp.com",
@@ -1311,5 +1343,3 @@
     </script>
 </body>
 </html>
-
-
