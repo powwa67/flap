@@ -36,12 +36,14 @@
         /* GIF LAYERING */
         .bg-gif {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; opacity: 0; transition: opacity 0.5s;
-            pointer-events: none; z-index: 5; /* Above canvas, below UI/Scanlines */
+            object-fit: cover; 
+            opacity: 0; 
+            transition: opacity 0.5s;
+            pointer-events: none; 
+            z-index: 5; 
             display: none; 
-            mix-blend-mode: hard-light; /* VAPORWAVE BLEND MODE */
+            image-rendering: pixelated; 
         }
-
         /* CRT SCANLINE EFFECT */
         .scanlines {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -785,4 +787,5 @@
     </script>
 </body>
 </html>
+
 
