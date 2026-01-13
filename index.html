@@ -362,14 +362,36 @@
         const height = LOGICAL_HEIGHT;
 
         function resize() {
+            // 1. Calculate the size we WANT the game to be on screen
             let winW = window.innerWidth;
             let winH = window.innerHeight;
             let scale = Math.min(winW / LOGICAL_WIDTH, winH / LOGICAL_HEIGHT);
+            
+            // Limit max size on desktop so it doesn't get too huge
             if (scale > 1.2 && winW > 800) scale = Math.min(scale, 1.0);
+
             let finalW = Math.floor(LOGICAL_WIDTH * scale);
             let finalH = Math.floor(LOGICAL_HEIGHT * scale);
-            wrapper.style.width = finalW + "px"; wrapper.style.height = finalH + "px";
-            canvas.width = LOGICAL_WIDTH; canvas.height = LOGICAL_HEIGHT;
+            
+            // 2. Set the CSS (Visual) size
+            wrapper.style.width = finalW + "px";
+            wrapper.style.height = finalH + "px";
+
+            // 3. HIGH-DPI FIX: Get the screen's pixel density
+            // We cap it at 2x to save battery/performance (going above 2x is rarely visible)
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            // 4. Set the Internal Resolution (Multiplying by DPR makes it sharp)
+            canvas.width = LOGICAL_WIDTH * dpr;
+            canvas.height = LOGICAL_HEIGHT * dpr;
+
+            // 5. Scale the drawing context so your game logic doesn't break
+            // This tells the game: "When I draw 1 pixel, actually draw 2 (or 3)"
+            ctx.scale(dpr, dpr);
+            
+            // 6. Force CSS to match wrapper
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
         }
         window.addEventListener('resize', resize);
         resize();
@@ -789,6 +811,7 @@
     </script>
 </body>
 </html>
+
 
 
 
